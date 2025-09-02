@@ -7,8 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
-import { Plus, FlaskConical, TrendingUp, Award, Loader2 } from "lucide-react";
-import { useCuppingSessions, CuppingSessionInput } from "@/hooks/useCuppingData";
+import { Plus, FlaskConical, TrendingUp, Award, Loader2, Edit2 } from "lucide-react";
+import { useCuppingSessions, CuppingSessionInput, CuppingSession } from "@/hooks/useCuppingData";
 
 interface CuppingScore {
   fragrance: number;
@@ -44,8 +44,9 @@ const cuppingProtocols = [
 ];
 
 const CuppingNotes = () => {
-  const { sessions, isLoading, addSession } = useCuppingSessions();
+  const { sessions, isLoading, addSession, updateSession } = useCuppingSessions();
   const [showForm, setShowForm] = useState(false);
+  const [editingSession, setEditingSession] = useState<CuppingSession | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [currentSession, setCurrentSession] = useState<Omit<CuppingSessionInput, 'total_score' | 'final_rating'>>({
@@ -143,6 +144,38 @@ const CuppingNotes = () => {
       defects: [],
       recommendations: ''
     });
+    setEditingSession(null);
+  };
+
+  const startEdit = (session: CuppingSession) => {
+    setEditingSession(session);
+    setCurrentSession({
+      coffee_name: session.coffee_name,
+      roaster: session.roaster,
+      origin: session.origin,
+      process: session.process,
+      roast_level: session.roast_level,
+      roast_date: session.roast_date || '',
+      cupping_protocol: session.cupping_protocol,
+      fragrance: session.fragrance || 6.0,
+      flavor: session.flavor || 6.0,
+      aftertaste: session.aftertaste || 6.0,
+      acidity: session.acidity || 6.0,
+      body: session.body || 6.0,
+      balance: session.balance || 6.0,
+      sweetness: session.sweetness || 6.0,
+      clean_cup: session.clean_cup || 6.0,
+      uniformity: session.uniformity || 6.0,
+      overall: session.overall || 6.0,
+      notes_dry: session.notes_dry || '',
+      notes_crust: session.notes_crust || '',
+      notes_flavor: session.notes_flavor || '',
+      notes_finish: session.notes_finish || '',
+      notes_overall: session.notes_overall || '',
+      defects: session.defects || [],
+      recommendations: session.recommendations || ''
+    });
+    setShowForm(true);
   };
 
   const saveSession = async () => {
@@ -157,7 +190,12 @@ const CuppingNotes = () => {
         final_rating: finalRating
       };
       
-      await addSession(session);
+      if (editingSession) {
+        await updateSession(editingSession.id, session);
+      } else {
+        await addSession(session);
+      }
+      
       resetForm();
       setShowForm(false);
     } catch (error) {
@@ -188,7 +226,7 @@ const CuppingNotes = () => {
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-2xl font-semibold text-primary flex items-center">
               <FlaskConical className="h-6 w-6 mr-2" />
-              New Cupping Session
+              {editingSession ? 'Edit Cupping Session' : 'New Cupping Session'}
             </h3>
             <div className="text-right">
               <div className="text-center p-4 bg-primary/5 rounded-lg">
@@ -247,8 +285,21 @@ const CuppingNotes = () => {
                 <SelectContent>
                   <SelectItem value="Washed">Washed</SelectItem>
                   <SelectItem value="Natural">Natural</SelectItem>
-                  <SelectItem value="Honey">Honey</SelectItem>
+                  <SelectItem value="Honey - Yellow">Honey - Yellow</SelectItem>
+                  <SelectItem value="Honey - Red">Honey - Red</SelectItem>
+                  <SelectItem value="Honey - Black">Honey - Black</SelectItem>
+                  <SelectItem value="Honey - White">Honey - White</SelectItem>
                   <SelectItem value="Semi-Washed">Semi-Washed</SelectItem>
+                  <SelectItem value="Anaerobic Natural">Anaerobic Natural</SelectItem>
+                  <SelectItem value="Anaerobic Washed">Anaerobic Washed</SelectItem>
+                  <SelectItem value="Anaerobic Honey">Anaerobic Honey</SelectItem>
+                  <SelectItem value="Carbonic Maceration">Carbonic Maceration</SelectItem>
+                  <SelectItem value="Thermal Shock">Thermal Shock</SelectItem>
+                  <SelectItem value="Extended Fermentation">Extended Fermentation</SelectItem>
+                  <SelectItem value="Lactic Process">Lactic Process</SelectItem>
+                  <SelectItem value="Yeast Inoculation">Yeast Inoculation</SelectItem>
+                  <SelectItem value="Co-fermentation">Co-fermentation</SelectItem>
+                  <SelectItem value="Experimental">Experimental</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -409,10 +460,10 @@ const CuppingNotes = () => {
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Saving Session...
+                  {editingSession ? 'Updating...' : 'Saving Session...'}
                 </>
               ) : (
-                "Save Cupping Session"
+                editingSession ? 'Update Session' : 'Save Cupping Session'
               )}
             </Button>
             <Button variant="outline" onClick={resetForm}>
@@ -452,63 +503,74 @@ const CuppingNotes = () => {
               <Card key={session.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="pt-6">
                   <div className="flex justify-between items-start mb-4">
-                    <div>
+                    <div className="flex-1">
                       <h3 className="text-xl font-bold">{session.coffee_name}</h3>
                       <p className="text-muted-foreground">{session.roaster} - {session.origin}</p>
                       <p className="text-sm text-muted-foreground">
                         {new Date(session.created_at).toLocaleDateString()} • {session.cupping_protocol}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-primary">{session.total_score.toFixed(1)}</div>
-                      <Badge className={getRatingColor(session.final_rating)}>
-                        {session.final_rating}
-                      </Badge>
+                    <div className="flex items-center gap-3">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => startEdit(session)}
+                        className="shrink-0"
+                      >
+                        <Edit2 className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-primary">{session.total_score?.toFixed(1) || '0.0'}</div>
+                        <Badge className={getRatingColor(session.final_rating || 'Below Standard')}>
+                          {session.final_rating || 'Unrated'}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
                   
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
                     <div className="text-center">
-                      <div className="text-sm font-medium">{session.fragrance.toFixed(1)}</div>
+                      <div className="text-sm font-medium">{(session.fragrance || 0).toFixed(1)}</div>
                       <div className="text-xs text-muted-foreground">Fragrance</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-sm font-medium">{session.flavor.toFixed(1)}</div>
+                      <div className="text-sm font-medium">{(session.flavor || 0).toFixed(1)}</div>
                       <div className="text-xs text-muted-foreground">Flavor</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-sm font-medium">{session.aftertaste.toFixed(1)}</div>
+                      <div className="text-sm font-medium">{(session.aftertaste || 0).toFixed(1)}</div>
                       <div className="text-xs text-muted-foreground">Aftertaste</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-sm font-medium">{session.acidity.toFixed(1)}</div>
+                      <div className="text-sm font-medium">{(session.acidity || 0).toFixed(1)}</div>
                       <div className="text-xs text-muted-foreground">Acidity</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-sm font-medium">{session.body.toFixed(1)}</div>
+                      <div className="text-sm font-medium">{(session.body || 0).toFixed(1)}</div>
                       <div className="text-xs text-muted-foreground">Body</div>
                     </div>
                   </div>
                   
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
                     <div className="text-center">
-                      <div className="text-sm font-medium">{session.balance.toFixed(1)}</div>
+                      <div className="text-sm font-medium">{(session.balance || 0).toFixed(1)}</div>
                       <div className="text-xs text-muted-foreground">Balance</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-sm font-medium">{session.sweetness.toFixed(1)}</div>
+                      <div className="text-sm font-medium">{(session.sweetness || 0).toFixed(1)}</div>
                       <div className="text-xs text-muted-foreground">Sweetness</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-sm font-medium">{session.clean_cup.toFixed(1)}</div>
+                      <div className="text-sm font-medium">{(session.clean_cup || 0).toFixed(1)}</div>
                       <div className="text-xs text-muted-foreground">Clean Cup</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-sm font-medium">{session.uniformity.toFixed(1)}</div>
+                      <div className="text-sm font-medium">{(session.uniformity || 0).toFixed(1)}</div>
                       <div className="text-xs text-muted-foreground">Uniformity</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-sm font-medium">{session.overall.toFixed(1)}</div>
+                      <div className="text-sm font-medium">{(session.overall || 0).toFixed(1)}</div>
                       <div className="text-xs text-muted-foreground">Overall</div>
                     </div>
                   </div>

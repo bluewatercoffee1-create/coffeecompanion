@@ -131,6 +131,44 @@ export const useCuppingSessions = () => {
     }
   };
 
+  const updateSession = async (id: string, session: CuppingSessionInput) => {
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to update sessions",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('cupping_sessions')
+        .update(session)
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setSessions(sessions.map(s => s.id === id ? data : s));
+      toast({
+        title: "Success",
+        description: "Cupping session updated successfully",
+      });
+      
+      return data;
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update cupping session",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
   useEffect(() => {
     fetchSessions();
   }, [user]);
@@ -139,6 +177,7 @@ export const useCuppingSessions = () => {
     sessions,
     isLoading,
     addSession,
+    updateSession,
     refetch: fetchSessions,
   };
 };

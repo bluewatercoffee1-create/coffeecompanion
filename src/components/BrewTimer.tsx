@@ -81,7 +81,9 @@ const brewMethods: Record<string, BrewMethod> = {
 
 export const BrewTimer = () => {
   const [selectedMethod, setSelectedMethod] = useState<string>('v60');
+  const [selectedGuide, setSelectedGuide] = useState<string>('');
   const [coffeeGrams, setCoffeeGrams] = useState<number>(22);
+  const [customRatio, setCustomRatio] = useState<number>(16.7);
   const [isRunning, setIsRunning] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -89,7 +91,13 @@ export const BrewTimer = () => {
   const { toast } = useToast();
 
   const method = brewMethods[selectedMethod];
-  const totalWater = Math.round(coffeeGrams * method.defaultRatio);
+  const currentRatio = customRatio;
+  const totalWater = Math.round(coffeeGrams * currentRatio);
+
+  useEffect(() => {
+    // Scale recipe based on coffee grams and update ratio when method changes
+    setCustomRatio(method.defaultRatio);
+  }, [selectedMethod, method]);
 
   useEffect(() => {
     // Scale recipe based on coffee grams
@@ -101,7 +109,7 @@ export const BrewTimer = () => {
     setScaledSteps(scaled);
     setCurrentStepIndex(0);
     setCurrentTime(0);
-  }, [selectedMethod, coffeeGrams, method, totalWater]);
+  }, [selectedMethod, coffeeGrams, method, totalWater, customRatio]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -188,6 +196,18 @@ export const BrewTimer = () => {
                 className="mt-1"
               />
             </div>
+            
+            <div>
+              <Label htmlFor="ratio">Water Ratio (1:X)</Label>
+              <Input
+                id="ratio"
+                type="number"
+                step="0.1"
+                value={customRatio}
+                onChange={(e) => setCustomRatio(Number(e.target.value))}
+                className="mt-1"
+              />
+            </div>
           </div>
         </Card>
 
@@ -209,7 +229,7 @@ export const BrewTimer = () => {
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Ratio:</span>
-              <span className="font-medium">1:{method.defaultRatio}</span>
+              <span className="font-medium">1:{currentRatio}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Profile:</span>

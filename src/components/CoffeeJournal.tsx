@@ -155,7 +155,7 @@ const CoffeeJournal = () => {
                 />
               </div>
               
-              <div>
+                <div>
                 <Label htmlFor="process">Process</Label>
                 <Select name="process">
                   <SelectTrigger>
@@ -164,8 +164,21 @@ const CoffeeJournal = () => {
                   <SelectContent>
                     <SelectItem value="Washed">Washed</SelectItem>
                     <SelectItem value="Natural">Natural</SelectItem>
-                    <SelectItem value="Honey">Honey</SelectItem>
+                    <SelectItem value="Honey - Yellow">Honey - Yellow</SelectItem>
+                    <SelectItem value="Honey - Red">Honey - Red</SelectItem>
+                    <SelectItem value="Honey - Black">Honey - Black</SelectItem>
+                    <SelectItem value="Honey - White">Honey - White</SelectItem>
                     <SelectItem value="Semi-Washed">Semi-Washed</SelectItem>
+                    <SelectItem value="Anaerobic Natural">Anaerobic Natural</SelectItem>
+                    <SelectItem value="Anaerobic Washed">Anaerobic Washed</SelectItem>
+                    <SelectItem value="Anaerobic Honey">Anaerobic Honey</SelectItem>
+                    <SelectItem value="Carbonic Maceration">Carbonic Maceration</SelectItem>
+                    <SelectItem value="Thermal Shock">Thermal Shock</SelectItem>
+                    <SelectItem value="Extended Fermentation">Extended Fermentation</SelectItem>
+                    <SelectItem value="Lactic Process">Lactic Process</SelectItem>
+                    <SelectItem value="Yeast Inoculation">Yeast Inoculation</SelectItem>
+                    <SelectItem value="Co-fermentation">Co-fermentation</SelectItem>
+                    <SelectItem value="Experimental">Experimental</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
