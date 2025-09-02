@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Timer, Book, Calculator, Wrench, Trophy, Coffee, ChevronRight, LogOut, User } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Timer, Book, Calculator, Wrench, Trophy, Coffee, ChevronRight, LogOut, User, Menu } from "lucide-react";
 import heroImage from "@/assets/coffee-hero.jpg";
 import { BrewTimer } from "@/components/BrewTimer";
 import CoffeeJournal from "@/components/CoffeeJournal";
@@ -168,6 +169,42 @@ const Index = () => {
             </Button>
             
             <div className="flex items-center gap-4">
+              {/* Mobile Menu */}
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="sm" className="md:hidden">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-80">
+                  <SheetHeader>
+                    <SheetTitle>Navigation</SheetTitle>
+                  </SheetHeader>
+                  <div className="flex flex-col gap-2 mt-6">
+                    <Button
+                      variant={activeFeature === 'home' ? "default" : "ghost"}
+                      onClick={() => setActiveFeature('home')}
+                      className="justify-start"
+                    >
+                      <Coffee className="h-4 w-4 mr-2" />
+                      Home
+                    </Button>
+                    {features.map((feature) => (
+                      <Button
+                        key={feature.id}
+                        variant={activeFeature === feature.id ? "default" : "ghost"}
+                        onClick={() => setActiveFeature(feature.id)}
+                        className="justify-start"
+                      >
+                        <feature.icon className="h-4 w-4 mr-2" />
+                        {feature.title}
+                      </Button>
+                    ))}
+                  </div>
+                </SheetContent>
+              </Sheet>
+
+              {/* Desktop Menu */}
               <div className="hidden md:flex space-x-2">
                 {features.map((feature) => (
                   <Button
@@ -183,13 +220,13 @@ const Index = () => {
               </div>
               
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
                   <User className="h-4 w-4" />
                   <span>Welcome back!</span>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => signOut()}>
                   <LogOut className="h-4 w-4 mr-2" />
-                  Sign Out
+                  <span className="hidden sm:inline">Sign Out</span>
                 </Button>
               </div>
             </div>
