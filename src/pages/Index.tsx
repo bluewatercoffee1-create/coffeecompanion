@@ -4,11 +4,11 @@ import { Card } from "@/components/ui/card";
 import { Timer, Book, Calculator, Wrench, Trophy, Coffee, ChevronRight } from "lucide-react";
 import heroImage from "@/assets/coffee-hero.jpg";
 import { BrewTimer } from "@/components/BrewTimer";
-import { CoffeeJournal } from "@/components/CoffeeJournal";
+import CoffeeJournal from "@/components/CoffeeJournal";
 import { RatioCalculator } from "@/components/RatioCalculator";
 import { BrewingGuides } from "@/components/BrewingGuides";
 import { EquipmentGuide } from "@/components/EquipmentGuide";
-import { CuppingNotes } from "@/components/CuppingNotes";
+import CuppingNotes from "@/components/CuppingNotes";
 
 const Index = () => {
   const [activeFeature, setActiveFeature] = useState<string>('home');

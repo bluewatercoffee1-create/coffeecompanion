@@ -1,13 +1,14 @@
 import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Plus, Coffee, Save, RotateCcw, Star } from "lucide-react";
+import { Plus, FlaskConical, TrendingUp, Award, Loader2 } from "lucide-react";
+import { useCuppingSessions, CuppingSessionInput } from "@/hooks/useCuppingData";
 
 interface CuppingScore {
   fragrance: number;
@@ -22,30 +23,6 @@ interface CuppingScore {
   overall: number;
 }
 
-interface CuppingSession {
-  id: string;
-  date: string;
-  coffeeName: string;
-  roaster: string;
-  origin: string;
-  process: string;
-  roastLevel: string;
-  roastDate?: string;
-  cuppingProtocol: string;
-  scores: CuppingScore;
-  totalScore: number;
-  finalRating: string;
-  notes: {
-    dry: string;
-    crust: string;
-    flavor: string;
-    finish: string;
-    overall: string;
-  };
-  defects: string[];
-  recommendations: string;
-}
-
 const scoreCategories = [
   { key: 'fragrance', label: 'Fragrance/Aroma', description: 'Dry fragrance and wet aroma', weight: 1 },
   { key: 'flavor', label: 'Flavor', description: 'Primary taste impression', weight: 1 },
@@ -54,7 +31,7 @@ const scoreCategories = [
   { key: 'body', label: 'Body', description: 'Tactile feeling and weight', weight: 1 },
   { key: 'balance', label: 'Balance', description: 'Harmony of flavor components', weight: 1 },
   { key: 'sweetness', label: 'Sweetness', description: 'Fullness and sweetness', weight: 1 },
-  { key: 'cleanCup', label: 'Clean Cup', description: 'Lack of defects', weight: 1 },
+  { key: 'clean_cup', label: 'Clean Cup', description: 'Lack of defects', weight: 1 },
   { key: 'uniformity', label: 'Uniformity', description: 'Consistency across cups', weight: 1 },
   { key: 'overall', label: 'Overall', description: 'Holistic impression', weight: 1 }
 ];
@@ -66,73 +43,43 @@ const cuppingProtocols = [
   'Custom Protocol'
 ];
 
-const mockSessions: CuppingSession[] = [
-  {
-    id: '1',
-    date: '2024-01-15',
-    coffeeName: 'Ethiopian Yirgacheffe',
-    roaster: 'Blue Bottle Coffee',
-    origin: 'Ethiopia, Yirgacheffe',
-    process: 'Washed',
-    roastLevel: 'Light',
-    roastDate: '2024-01-10',
-    cuppingProtocol: 'SCA Standard',
-    totalScore: 86.5,
-    finalRating: 'Excellent',
-    scores: {
-      fragrance: 8.5,
-      flavor: 8.75,
-      aftertaste: 8.5,
-      acidity: 9.0,
-      body: 7.5,
-      balance: 8.75,
-      sweetness: 8.5,
-      cleanCup: 9.0,
-      uniformity: 8.5,
-      overall: 8.5
-    },
-    notes: {
-      dry: 'Intense floral notes, bergamot, lemon zest',
-      crust: 'Sweet florals, jasmine, bright citrus',
-      flavor: 'Complex florals, lemon tea, bergamot, honey sweetness',
-      finish: 'Long, clean finish with lingering florals',
-      overall: 'Outstanding example of Yirgacheffe character'
-    },
-    defects: [],
-    recommendations: 'Perfect for pour-over methods. Showcase coffee.'
-  }
-];
-
-export const CuppingNotes = () => {
-  const [sessions, setSessions] = useState<CuppingSession[]>(mockSessions);
+const CuppingNotes = () => {
+  const { sessions, isLoading, addSession } = useCuppingSessions();
   const [showForm, setShowForm] = useState(false);
-  const [currentSession, setCurrentSession] = useState<Partial<CuppingSession>>({
-    scores: {
-      fragrance: 6,
-      flavor: 6,
-      aftertaste: 6,
-      acidity: 6,
-      body: 6,
-      balance: 6,
-      sweetness: 6,
-      cleanCup: 8,
-      uniformity: 8,
-      overall: 6
-    },
-    notes: {
-      dry: '',
-      crust: '',
-      flavor: '',
-      finish: '',
-      overall: ''
-    },
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [currentSession, setCurrentSession] = useState<Omit<CuppingSessionInput, 'total_score' | 'final_rating'>>({
+    coffee_name: '',
+    roaster: '',
+    origin: '',
+    process: '',
+    roast_level: '',
+    roast_date: '',
+    cupping_protocol: 'SCA Standard',
+    fragrance: 6.0,
+    flavor: 6.0,
+    aftertaste: 6.0,
+    acidity: 6.0,
+    body: 6.0,
+    balance: 6.0,
+    sweetness: 6.0,
+    clean_cup: 6.0,
+    uniformity: 6.0,
+    overall: 6.0,
+    notes_dry: '',
+    notes_crust: '',
+    notes_flavor: '',
+    notes_finish: '',
+    notes_overall: '',
     defects: [],
-    cuppingProtocol: 'SCA Standard'
+    recommendations: ''
   });
 
-  const calculateTotalScore = (scores: CuppingScore): number => {
-    const total = Object.values(scores).reduce((sum, score) => sum + score, 0);
-    return Math.round(total * 10) / 10;
+  const calculateTotalScore = (): number => {
+    return currentSession.fragrance + currentSession.flavor + currentSession.aftertaste + 
+           currentSession.acidity + currentSession.body + currentSession.balance + 
+           currentSession.sweetness + currentSession.clean_cup + currentSession.uniformity + 
+           currentSession.overall;
   };
 
   const getFinalRating = (score: number): string => {
@@ -146,90 +93,79 @@ export const CuppingNotes = () => {
 
   const getRatingColor = (rating: string): string => {
     switch (rating) {
-      case 'Outstanding': return 'bg-purple-100 text-purple-800';
-      case 'Excellent': return 'bg-green-100 text-green-800';
-      case 'Very Good': return 'bg-blue-100 text-blue-800';
-      case 'Good': return 'bg-yellow-100 text-yellow-800';
-      case 'Fair': return 'bg-orange-100 text-orange-800';
-      default: return 'bg-red-100 text-red-800';
+      case 'Outstanding': return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
+      case 'Excellent': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      case 'Very Good': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+      case 'Good': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
+      case 'Fair': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
+      default: return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
     }
   };
 
-  const updateScore = (category: keyof CuppingScore, value: number) => {
-    const newScores = { ...currentSession.scores!, [category]: value };
-    setCurrentSession({
-      ...currentSession,
-      scores: newScores
-    });
+  const updateScore = (category: keyof Pick<CuppingSessionInput, 'fragrance' | 'flavor' | 'aftertaste' | 'acidity' | 'body' | 'balance' | 'sweetness' | 'clean_cup' | 'uniformity' | 'overall'>, value: number) => {
+    setCurrentSession(prev => ({
+      ...prev,
+      [category]: value
+    }));
   };
 
-  const updateNote = (category: keyof typeof currentSession.notes, value: string) => {
-    setCurrentSession({
-      ...currentSession,
-      notes: {
-        ...currentSession.notes!,
-        [category]: value
-      }
-    });
+  const updateNote = (category: keyof Pick<CuppingSessionInput, 'notes_dry' | 'notes_crust' | 'notes_flavor' | 'notes_finish' | 'notes_overall'>, value: string) => {
+    setCurrentSession(prev => ({
+      ...prev,
+      [category]: value
+    }));
   };
 
   const resetForm = () => {
     setCurrentSession({
-      scores: {
-        fragrance: 6,
-        flavor: 6,
-        aftertaste: 6,
-        acidity: 6,
-        body: 6,
-        balance: 6,
-        sweetness: 6,
-        cleanCup: 8,
-        uniformity: 8,
-        overall: 6
-      },
-      notes: {
-        dry: '',
-        crust: '',
-        flavor: '',
-        finish: '',
-        overall: ''
-      },
+      coffee_name: '',
+      roaster: '',
+      origin: '',
+      process: '',
+      roast_level: '',
+      roast_date: '',
+      cupping_protocol: 'SCA Standard',
+      fragrance: 6.0,
+      flavor: 6.0,
+      aftertaste: 6.0,
+      acidity: 6.0,
+      body: 6.0,
+      balance: 6.0,
+      sweetness: 6.0,
+      clean_cup: 6.0,
+      uniformity: 6.0,
+      overall: 6.0,
+      notes_dry: '',
+      notes_crust: '',
+      notes_flavor: '',
+      notes_finish: '',
+      notes_overall: '',
       defects: [],
-      cuppingProtocol: 'SCA Standard'
+      recommendations: ''
     });
   };
 
-  const saveSession = () => {
-    if (currentSession.coffeeName && currentSession.scores) {
-      const totalScore = calculateTotalScore(currentSession.scores);
+  const saveSession = async () => {
+    setIsSubmitting(true);
+    try {
+      const totalScore = calculateTotalScore();
       const finalRating = getFinalRating(totalScore);
       
-      const newSession: CuppingSession = {
-        id: Date.now().toString(),
-        date: new Date().toISOString().split('T')[0],
-        coffeeName: currentSession.coffeeName || '',
-        roaster: currentSession.roaster || '',
-        origin: currentSession.origin || '',
-        process: currentSession.process || '',
-        roastLevel: currentSession.roastLevel || '',
-        roastDate: currentSession.roastDate,
-        cuppingProtocol: currentSession.cuppingProtocol || 'SCA Standard',
-        scores: currentSession.scores,
-        totalScore,
-        finalRating,
-        notes: currentSession.notes || { dry: '', crust: '', flavor: '', finish: '', overall: '' },
-        defects: currentSession.defects || [],
-        recommendations: currentSession.recommendations || ''
+      const session: CuppingSessionInput = {
+        ...currentSession,
+        total_score: totalScore,
+        final_rating: finalRating
       };
       
-      setSessions([newSession, ...sessions]);
+      await addSession(session);
       resetForm();
       setShowForm(false);
+    } catch (error) {
+      // Error handled by hook
+    } finally {
+      setIsSubmitting(false);
     }
   };
-
-  const currentTotal = currentSession.scores ? calculateTotalScore(currentSession.scores) : 0;
-  const currentRating = getFinalRating(currentTotal);
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-8">
@@ -240,11 +176,7 @@ export const CuppingNotes = () => {
 
       {/* Controls */}
       <div className="flex justify-center">
-        <Button 
-          onClick={() => setShowForm(!showForm)} 
-          size="lg"
-          className="px-8"
-        >
+        <Button onClick={() => setShowForm(!showForm)} size="lg" className="px-8">
           <Plus className="h-5 w-5 mr-2" />
           New Cupping Session
         </Button>
@@ -252,17 +184,22 @@ export const CuppingNotes = () => {
 
       {/* Cupping Form */}
       {showForm && (
-        <Card className="coffee-card p-6">
+        <Card className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-2xl font-semibold text-primary flex items-center">
-              <Trophy className="h-6 w-6 mr-2" />
+              <FlaskConical className="h-6 w-6 mr-2" />
               New Cupping Session
             </h3>
             <div className="text-right">
-              <p className="text-3xl font-bold text-primary">{currentTotal}</p>
-              <Badge className={getRatingColor(currentRating)}>
-                {currentRating}
-              </Badge>
+              <div className="text-center p-4 bg-primary/5 rounded-lg">
+                <div className="text-2xl font-bold text-primary">
+                  {calculateTotalScore().toFixed(1)}
+                </div>
+                <div className="text-sm text-muted-foreground">Total Score</div>
+                <Badge variant="secondary" className="mt-2">
+                  {getFinalRating(calculateTotalScore())}
+                </Badge>
+              </div>
             </div>
           </div>
 
@@ -272,9 +209,9 @@ export const CuppingNotes = () => {
               <Label htmlFor="coffeeName">Coffee Name *</Label>
               <Input
                 id="coffeeName"
-                value={currentSession.coffeeName || ''}
-                onChange={(e) => setCurrentSession({...currentSession, coffeeName: e.target.value})}
-                placeholder="Ethiopian Yirgacheffe"
+                value={currentSession.coffee_name}
+                onChange={(e) => setCurrentSession(prev => ({ ...prev, coffee_name: e.target.value }))}
+                placeholder="e.g., Ethiopian Yirgacheffe"
               />
             </div>
             
@@ -282,8 +219,8 @@ export const CuppingNotes = () => {
               <Label htmlFor="roaster">Roaster</Label>
               <Input
                 id="roaster"
-                value={currentSession.roaster || ''}
-                onChange={(e) => setCurrentSession({...currentSession, roaster: e.target.value})}
+                value={currentSession.roaster}
+                onChange={(e) => setCurrentSession(prev => ({ ...prev, roaster: e.target.value }))}
                 placeholder="Blue Bottle Coffee"
               />
             </div>
@@ -292,15 +229,18 @@ export const CuppingNotes = () => {
               <Label htmlFor="origin">Origin</Label>
               <Input
                 id="origin"
-                value={currentSession.origin || ''}
-                onChange={(e) => setCurrentSession({...currentSession, origin: e.target.value})}
+                value={currentSession.origin}
+                onChange={(e) => setCurrentSession(prev => ({ ...prev, origin: e.target.value }))}
                 placeholder="Ethiopia, Yirgacheffe"
               />
             </div>
             
             <div>
               <Label htmlFor="process">Process</Label>
-              <Select value={currentSession.process} onValueChange={(value) => setCurrentSession({...currentSession, process: value})}>
+              <Select 
+                value={currentSession.process} 
+                onValueChange={(value) => setCurrentSession(prev => ({ ...prev, process: value }))}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select process" />
                 </SelectTrigger>
@@ -315,7 +255,10 @@ export const CuppingNotes = () => {
             
             <div>
               <Label htmlFor="roastLevel">Roast Level</Label>
-              <Select value={currentSession.roastLevel} onValueChange={(value) => setCurrentSession({...currentSession, roastLevel: value})}>
+              <Select 
+                value={currentSession.roast_level} 
+                onValueChange={(value) => setCurrentSession(prev => ({ ...prev, roast_level: value }))}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select roast" />
                 </SelectTrigger>
@@ -331,7 +274,10 @@ export const CuppingNotes = () => {
             
             <div>
               <Label htmlFor="protocol">Cupping Protocol</Label>
-              <Select value={currentSession.cuppingProtocol} onValueChange={(value) => setCurrentSession({...currentSession, cuppingProtocol: value})}>
+              <Select
+                value={currentSession.cupping_protocol}
+                onValueChange={(value) => setCurrentSession(prev => ({ ...prev, cupping_protocol: value }))}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select protocol" />
                 </SelectTrigger>
@@ -341,6 +287,16 @@ export const CuppingNotes = () => {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            
+            <div>
+              <Label htmlFor="roastDate">Roast Date</Label>
+              <Input
+                id="roastDate"
+                value={currentSession.roast_date}
+                onChange={(e) => setCurrentSession(prev => ({ ...prev, roast_date: e.target.value }))}
+                type="date"
+              />
             </div>
           </div>
 
@@ -355,24 +311,19 @@ export const CuppingNotes = () => {
                       <Label className="font-medium">{category.label}</Label>
                       <p className="text-sm text-muted-foreground">{category.description}</p>
                     </div>
-                    <div className="text-right">
-                      <span className="text-xl font-bold text-primary">
-                        {currentSession.scores?.[category.key as keyof CuppingScore] || 6}
-                      </span>
-                    </div>
                   </div>
-                  <Slider
-                    value={[currentSession.scores?.[category.key as keyof CuppingScore] || 6]}
-                    onValueChange={(value) => updateScore(category.key as keyof CuppingScore, value[0])}
-                    min={6}
-                    max={10}
-                    step={0.25}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>6.0</span>
-                    <span>8.0</span>
-                    <span>10.0</span>
+                  <div className="flex items-center space-x-4">
+                    <Slider
+                      value={[currentSession[category.key as keyof Pick<CuppingSessionInput, 'fragrance' | 'flavor' | 'aftertaste' | 'acidity' | 'body' | 'balance' | 'sweetness' | 'clean_cup' | 'uniformity' | 'overall'>]]}
+                      onValueChange={(values) => updateScore(category.key as keyof Pick<CuppingSessionInput, 'fragrance' | 'flavor' | 'aftertaste' | 'acidity' | 'body' | 'balance' | 'sweetness' | 'clean_cup' | 'uniformity' | 'overall'>, values[0])}
+                      max={10}
+                      min={0}
+                      step={0.25}
+                      className="flex-1"
+                    />
+                    <span className="w-12 text-right font-mono">
+                      {(currentSession[category.key as keyof Pick<CuppingSessionInput, 'fragrance' | 'flavor' | 'aftertaste' | 'acidity' | 'body' | 'balance' | 'sweetness' | 'clean_cup' | 'uniformity' | 'overall'>] as number).toFixed(2)}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -387,9 +338,9 @@ export const CuppingNotes = () => {
                 <Label htmlFor="dryNotes">Dry Fragrance</Label>
                 <Textarea
                   id="dryNotes"
-                  value={currentSession.notes?.dry || ''}
-                  onChange={(e) => updateNote('dry', e.target.value)}
-                  placeholder="Floral, citrus, spice notes..."
+                  value={currentSession.notes_dry}
+                  onChange={(e) => updateNote('notes_dry', e.target.value)}
+                  placeholder="Describe the dry fragrance..."
                   rows={2}
                 />
               </div>
@@ -398,9 +349,9 @@ export const CuppingNotes = () => {
                 <Label htmlFor="crustNotes">Crust/Wet Aroma</Label>
                 <Textarea
                   id="crustNotes"
-                  value={currentSession.notes?.crust || ''}
-                  onChange={(e) => updateNote('crust', e.target.value)}
-                  placeholder="Aromatics after breaking crust..."
+                  value={currentSession.notes_crust}
+                  onChange={(e) => updateNote('notes_crust', e.target.value)}
+                  placeholder="Describe the crust aroma..."
                   rows={2}
                 />
               </div>
@@ -409,10 +360,10 @@ export const CuppingNotes = () => {
                 <Label htmlFor="flavorNotes">Flavor</Label>
                 <Textarea
                   id="flavorNotes"
-                  value={currentSession.notes?.flavor || ''}
-                  onChange={(e) => updateNote('flavor', e.target.value)}
-                  placeholder="Primary taste impressions..."
-                  rows={2}
+                  value={currentSession.notes_flavor}
+                  onChange={(e) => updateNote('notes_flavor', e.target.value)}
+                  placeholder="Describe the flavor profile..."
+                  rows={3}
                 />
               </div>
               
@@ -420,9 +371,9 @@ export const CuppingNotes = () => {
                 <Label htmlFor="finishNotes">Finish/Aftertaste</Label>
                 <Textarea
                   id="finishNotes"
-                  value={currentSession.notes?.finish || ''}
-                  onChange={(e) => updateNote('finish', e.target.value)}
-                  placeholder="Lingering flavors and length..."
+                  value={currentSession.notes_finish}
+                  onChange={(e) => updateNote('notes_finish', e.target.value)}
+                  placeholder="Describe the finish..."
                   rows={2}
                 />
               </div>
@@ -432,9 +383,9 @@ export const CuppingNotes = () => {
               <Label htmlFor="overallNotes">Overall Impression</Label>
               <Textarea
                 id="overallNotes"
-                value={currentSession.notes?.overall || ''}
-                onChange={(e) => updateNote('overall', e.target.value)}
-                placeholder="Holistic assessment and standout characteristics..."
+                value={currentSession.notes_overall}
+                onChange={(e) => updateNote('notes_overall', e.target.value)}
+                placeholder="Overall impressions..."
                 rows={3}
               />
             </div>
@@ -445,8 +396,8 @@ export const CuppingNotes = () => {
             <Label htmlFor="recommendations">Brewing Recommendations</Label>
             <Textarea
               id="recommendations"
-              value={currentSession.recommendations || ''}
-              onChange={(e) => setCurrentSession({...currentSession, recommendations: e.target.value})}
+              value={currentSession.recommendations}
+              onChange={(e) => setCurrentSession(prev => ({ ...prev, recommendations: e.target.value }))}
               placeholder="Suggested brewing methods, ratios, and serving recommendations..."
               rows={2}
             />
@@ -454,12 +405,17 @@ export const CuppingNotes = () => {
 
           {/* Actions */}
           <div className="flex space-x-4">
-            <Button onClick={saveSession} className="flex-1">
-              <Save className="h-4 w-4 mr-2" />
-              Save Cupping Session
+            <Button type="button" onClick={saveSession} className="flex-1" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Saving Session...
+                </>
+              ) : (
+                "Save Cupping Session"
+              )}
             </Button>
             <Button variant="outline" onClick={resetForm}>
-              <RotateCcw className="h-4 w-4 mr-2" />
               Reset
             </Button>
             <Button variant="outline" onClick={() => setShowForm(false)}>
@@ -469,74 +425,114 @@ export const CuppingNotes = () => {
         </Card>
       )}
 
-      {/* Previous Sessions */}
-      <div className="space-y-6">
-        <h3 className="text-2xl font-semibold text-primary">Cupping History</h3>
-        
-        {sessions.map((session) => (
-          <Card key={session.id} className="coffee-card p-6">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h4 className="text-xl font-bold text-primary flex items-center">
-                  <Coffee className="h-5 w-5 mr-2" />
-                  {session.coffeeName}
-                </h4>
-                <p className="text-muted-foreground">{session.roaster} • {session.origin}</p>
-                <p className="text-sm text-muted-foreground">
-                  {new Date(session.date).toLocaleDateString()} • {session.cuppingProtocol}
+      {/* Cupping Sessions List */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-2 text-lg">Loading cupping sessions...</span>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {sessions.length === 0 ? (
+            <Card className="text-center py-12">
+              <CardContent className="pt-6">
+                <FlaskConical className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No Cupping Sessions</h3>
+                <p className="text-muted-foreground mb-4">
+                  Start your professional coffee evaluation journey
                 </p>
-              </div>
-              
-              <div className="text-right">
-                <p className="text-3xl font-bold text-primary">{session.totalScore}</p>
-                <Badge className={getRatingColor(session.finalRating)}>
-                  {session.finalRating}
-                </Badge>
-              </div>
-            </div>
-
-            {/* Score Breakdown */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4 text-sm">
-              {scoreCategories.slice(0, 5).map((category) => (
-                <div key={category.key} className="text-center">
-                  <p className="text-xs text-muted-foreground">{category.label}</p>
-                  <p className="font-semibold">{session.scores[category.key as keyof CuppingScore]}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Notes Preview */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <h5 className="font-medium text-primary mb-1">Flavor Profile</h5>
-                <p className="text-sm text-muted-foreground italic">"{session.notes.flavor}"</p>
-              </div>
-              
-              <div>
-                <h5 className="font-medium text-primary mb-1">Overall</h5>
-                <p className="text-sm text-muted-foreground italic">"{session.notes.overall}"</p>
-              </div>
-            </div>
-
-            {session.recommendations && (
-              <div className="mt-4 p-3 bg-secondary rounded-lg">
-                <h5 className="font-medium text-primary mb-1">Recommendations</h5>
-                <p className="text-sm">{session.recommendations}</p>
-              </div>
-            )}
-          </Card>
-        ))}
-      </div>
-
-      {sessions.length === 0 && !showForm && (
-        <div className="text-center py-12">
-          <Trophy className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground text-lg">No cupping sessions yet</p>
-          <p className="text-sm text-muted-foreground mt-2">
-            Start your first professional coffee evaluation!
-          </p>
+                <Button onClick={() => setShowForm(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create First Session
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            sessions.map((session) => (
+              <Card key={session.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="pt-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-xl font-bold">{session.coffee_name}</h3>
+                      <p className="text-muted-foreground">{session.roaster} - {session.origin}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(session.created_at).toLocaleDateString()} • {session.cupping_protocol}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-primary">{session.total_score.toFixed(1)}</div>
+                      <Badge className={getRatingColor(session.final_rating)}>
+                        {session.final_rating}
+                      </Badge>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
+                    <div className="text-center">
+                      <div className="text-sm font-medium">{session.fragrance.toFixed(1)}</div>
+                      <div className="text-xs text-muted-foreground">Fragrance</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm font-medium">{session.flavor.toFixed(1)}</div>
+                      <div className="text-xs text-muted-foreground">Flavor</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm font-medium">{session.aftertaste.toFixed(1)}</div>
+                      <div className="text-xs text-muted-foreground">Aftertaste</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm font-medium">{session.acidity.toFixed(1)}</div>
+                      <div className="text-xs text-muted-foreground">Acidity</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm font-medium">{session.body.toFixed(1)}</div>
+                      <div className="text-xs text-muted-foreground">Body</div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
+                    <div className="text-center">
+                      <div className="text-sm font-medium">{session.balance.toFixed(1)}</div>
+                      <div className="text-xs text-muted-foreground">Balance</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm font-medium">{session.sweetness.toFixed(1)}</div>
+                      <div className="text-xs text-muted-foreground">Sweetness</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm font-medium">{session.clean_cup.toFixed(1)}</div>
+                      <div className="text-xs text-muted-foreground">Clean Cup</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm font-medium">{session.uniformity.toFixed(1)}</div>
+                      <div className="text-xs text-muted-foreground">Uniformity</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm font-medium">{session.overall.toFixed(1)}</div>
+                      <div className="text-xs text-muted-foreground">Overall</div>
+                    </div>
+                  </div>
+                  
+                  {(session.notes_overall || session.recommendations) && (
+                    <div className="border-t pt-4 space-y-2">
+                      {session.notes_overall && (
+                        <p className="text-sm italic">"{session.notes_overall}"</p>
+                      )}
+                      {session.recommendations && (
+                        <p className="text-sm text-muted-foreground">
+                          <strong>Recommendations:</strong> {session.recommendations}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
       )}
     </div>
   );
 };
+
+export default CuppingNotes;

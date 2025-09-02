@@ -1,157 +1,84 @@
 import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Star, Plus, Search, Filter, Calendar, MapPin, Bean } from "lucide-react";
+import { Plus, Star, Search, Coffee, Calendar, MapPin, Loader2 } from "lucide-react";
+import { useCoffeeEntries, CoffeeEntryInput } from "@/hooks/useCoffeeData";
 
-interface CoffeeEntry {
-  id: string;
-  date: string;
-  coffeeName: string;
-  roaster: string;
-  origin: string;
-  process: string;
-  roastLevel: string;
-  brewMethod: string;
-  grindSize: string;
-  waterTemp: number;
-  brewTime: string;
-  ratio: string;
-  rating: number;
-  tastingNotes: string;
-  flavorProfile: string[];
-  price: number;
-}
-
-const mockEntries: CoffeeEntry[] = [
-  {
-    id: '1',
-    date: '2024-01-15',
-    coffeeName: 'Ethiopian Yirgacheffe',
-    roaster: 'Blue Bottle Coffee',
-    origin: 'Ethiopia, Yirgacheffe',
-    process: 'Washed',
-    roastLevel: 'Light',
-    brewMethod: 'V60',
-    grindSize: 'Medium-Fine',
-    waterTemp: 96,
-    brewTime: '2:45',
-    ratio: '1:16',
-    rating: 4.5,
-    tastingNotes: 'Bright acidity with floral notes, hints of lemon and tea-like finish',
-    flavorProfile: ['Floral', 'Citrus', 'Tea-like', 'Bright'],
-    price: 24
-  },
-  {
-    id: '2',
-    date: '2024-01-14',
-    coffeeName: 'Colombian Huila',
-    roaster: 'Counter Culture',
-    origin: 'Colombia, Huila',
-    process: 'Natural',
-    roastLevel: 'Medium',
-    brewMethod: 'Chemex',
-    grindSize: 'Medium',
-    waterTemp: 94,
-    brewTime: '4:30',
-    ratio: '1:15',
-    rating: 4,
-    tastingNotes: 'Chocolate and caramel sweetness with nutty undertones',
-    flavorProfile: ['Chocolate', 'Caramel', 'Nutty', 'Sweet'],
-    price: 22
-  }
-];
-
-export const CoffeeJournal = () => {
-  const [entries, setEntries] = useState<CoffeeEntry[]>(mockEntries);
+const CoffeeJournal = () => {
+  const { entries, isLoading, addEntry } = useCoffeeEntries();
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterRoaster, setFilterRoaster] = useState('all');
-  const [newEntry, setNewEntry] = useState<Partial<CoffeeEntry>>({
-    rating: 0,
-    flavorProfile: [],
-    waterTemp: 94
-  });
+  const [selectedRoaster, setSelectedRoaster] = useState<string>('all');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const flavorOptions = [
-    'Floral', 'Citrus', 'Berry', 'Chocolate', 'Caramel', 'Nutty', 'Spicy',
-    'Fruity', 'Wine-like', 'Tea-like', 'Bright', 'Sweet', 'Earthy', 'Smoky'
-  ];
-
-  const addFlavorProfile = (flavor: string) => {
-    if (!newEntry.flavorProfile?.includes(flavor)) {
-      setNewEntry({
-        ...newEntry,
-        flavorProfile: [...(newEntry.flavorProfile || []), flavor]
-      });
-    }
-  };
-
-  const removeFlavorProfile = (flavor: string) => {
-    setNewEntry({
-      ...newEntry,
-      flavorProfile: newEntry.flavorProfile?.filter(f => f !== flavor) || []
-    });
-  };
-
-  const handleSubmit = () => {
-    if (newEntry.coffeeName && newEntry.roaster) {
-      const entry: CoffeeEntry = {
-        id: Date.now().toString(),
-        date: new Date().toISOString().split('T')[0],
-        coffeeName: newEntry.coffeeName || '',
-        roaster: newEntry.roaster || '',
-        origin: newEntry.origin || '',
-        process: newEntry.process || '',
-        roastLevel: newEntry.roastLevel || '',
-        brewMethod: newEntry.brewMethod || '',
-        grindSize: newEntry.grindSize || '',
-        waterTemp: newEntry.waterTemp || 94,
-        brewTime: newEntry.brewTime || '',
-        ratio: newEntry.ratio || '',
-        rating: newEntry.rating || 0,
-        tastingNotes: newEntry.tastingNotes || '',
-        flavorProfile: newEntry.flavorProfile || [],
-        price: newEntry.price || 0
-      };
-      
-      setEntries([entry, ...entries]);
-      setNewEntry({ rating: 0, flavorProfile: [], waterTemp: 94 });
+  const handleAddEntry = async (newEntry: CoffeeEntryInput) => {
+    setIsSubmitting(true);
+    try {
+      await addEntry(newEntry);
       setShowForm(false);
+    } catch (error) {
+      // Error handled by the hook
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const filteredEntries = entries.filter(entry => {
-    const matchesSearch = entry.coffeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = entry.coffee_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          entry.roaster.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          entry.origin.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRoaster = filterRoaster === 'all' || entry.roaster === filterRoaster;
+    const matchesRoaster = selectedRoaster === 'all' || entry.roaster === selectedRoaster;
     return matchesSearch && matchesRoaster;
   });
 
-  const uniqueRoasters = Array.from(new Set(entries.map(e => e.roaster)));
+  const uniqueRoasters = Array.from(new Set(entries.map(entry => entry.roaster)));
 
-  const StarRating = ({ rating, onRatingChange, interactive = false }: { 
-    rating: number; 
-    onRatingChange?: (rating: number) => void;
-    interactive?: boolean;
-  }) => (
+  const StarRating = ({ rating }: { rating: number }) => (
     <div className="flex space-x-1">
       {[1, 2, 3, 4, 5].map((star) => (
         <Star
           key={star}
-          className={`h-5 w-5 cursor-pointer ${
-            star <= rating ? 'fill-coffee-golden text-coffee-golden' : 'text-muted-foreground'
+          className={`h-4 w-4 ${
+            star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'
           }`}
-          onClick={() => interactive && onRatingChange?.(star)}
         />
       ))}
     </div>
   );
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const formData = new FormData(e.target as HTMLFormElement);
+    
+    const flavorTags = (formData.get('flavorProfile') as string)
+      .split(',')
+      .map(tag => tag.trim())
+      .filter(tag => tag.length > 0);
+
+    const entry: CoffeeEntryInput = {
+      coffee_name: formData.get('coffeeName') as string,
+      roaster: formData.get('roaster') as string,
+      origin: formData.get('origin') as string,
+      process: formData.get('process') as string,
+      roast_level: formData.get('roastLevel') as string,
+      brew_method: formData.get('brewMethod') as string,
+      grind_size: formData.get('grindSize') as string,
+      water_temp: Number(formData.get('waterTemp')),
+      brew_time: formData.get('brewTime') as string,
+      ratio: formData.get('ratio') as string,
+      rating: Number(formData.get('rating')),
+      tasting_notes: formData.get('tastingNotes') as string,
+      flavor_profile: flavorTags,
+      price: Number(formData.get('price')) || undefined
+    };
+
+    handleAddEntry(entry);
+  };
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-8">
@@ -173,9 +100,8 @@ export const CoffeeJournal = () => {
             />
           </div>
           
-          <Select value={filterRoaster} onValueChange={setFilterRoaster}>
+          <Select value={selectedRoaster} onValueChange={setSelectedRoaster}>
             <SelectTrigger className="w-48">
-              <Filter className="h-4 w-4 mr-2" />
               <SelectValue placeholder="Filter by roaster" />
             </SelectTrigger>
             <SelectContent>
@@ -195,229 +121,291 @@ export const CoffeeJournal = () => {
 
       {/* Add Entry Form */}
       {showForm && (
-        <Card className="coffee-card p-6">
+        <Card className="p-6">
           <h3 className="text-xl font-semibold mb-6 text-primary">New Coffee Entry</h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="coffeeName">Coffee Name *</Label>
+                <Input
+                  id="coffeeName"
+                  name="coffeeName"
+                  placeholder="Ethiopian Yirgacheffe"
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="roaster">Roaster *</Label>
+                <Input
+                  id="roaster"
+                  name="roaster"
+                  placeholder="Blue Bottle Coffee"
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="origin">Origin</Label>
+                <Input
+                  id="origin"
+                  name="origin"
+                  placeholder="Ethiopia, Yirgacheffe"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="process">Process</Label>
+                <Select name="process">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select process" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Washed">Washed</SelectItem>
+                    <SelectItem value="Natural">Natural</SelectItem>
+                    <SelectItem value="Honey">Honey</SelectItem>
+                    <SelectItem value="Semi-Washed">Semi-Washed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="roastLevel">Roast Level</Label>
+                <Select name="roastLevel">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select roast" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Light">Light</SelectItem>
+                    <SelectItem value="Light-Medium">Light-Medium</SelectItem>
+                    <SelectItem value="Medium">Medium</SelectItem>
+                    <SelectItem value="Medium-Dark">Medium-Dark</SelectItem>
+                    <SelectItem value="Dark">Dark</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="brewMethod">Brew Method</Label>
+                <Select name="brewMethod">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select method" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="V60">V60</SelectItem>
+                    <SelectItem value="Chemex">Chemex</SelectItem>
+                    <SelectItem value="AeroPress">AeroPress</SelectItem>
+                    <SelectItem value="French Press">French Press</SelectItem>
+                    <SelectItem value="Espresso">Espresso</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="grindSize">Grind Size</Label>
+                <Input
+                  id="grindSize"
+                  name="grindSize"
+                  placeholder="Medium-Fine"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="waterTemp">Water Temperature (°C)</Label>
+                <Input
+                  id="waterTemp"
+                  name="waterTemp"
+                  type="number"
+                  placeholder="94"
+                  min="80"
+                  max="100"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="brewTime">Brew Time</Label>
+                <Input
+                  id="brewTime"
+                  name="brewTime"
+                  placeholder="2:45"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="ratio">Ratio</Label>
+                <Input
+                  id="ratio"
+                  name="ratio"
+                  placeholder="1:16"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="rating">Rating (1-5)</Label>
+                <Input
+                  id="rating"
+                  name="rating"
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="5"
+                  placeholder="4.5"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="price">Price ($)</Label>
+                <Input
+                  id="price"
+                  name="price"
+                  type="number"
+                  step="0.01"
+                  placeholder="24.99"
+                />
+              </div>
+            </div>
+            
             <div>
-              <Label htmlFor="coffeeName">Coffee Name *</Label>
+              <Label htmlFor="flavorProfile">Flavor Profile (comma-separated)</Label>
               <Input
-                id="coffeeName"
-                value={newEntry.coffeeName || ''}
-                onChange={(e) => setNewEntry({...newEntry, coffeeName: e.target.value})}
-                placeholder="Ethiopian Yirgacheffe"
+                id="flavorProfile"
+                name="flavorProfile"
+                placeholder="Floral, Citrus, Tea-like, Bright"
               />
             </div>
             
             <div>
-              <Label htmlFor="roaster">Roaster *</Label>
-              <Input
-                id="roaster"
-                value={newEntry.roaster || ''}
-                onChange={(e) => setNewEntry({...newEntry, roaster: e.target.value})}
-                placeholder="Blue Bottle Coffee"
+              <Label htmlFor="tastingNotes">Tasting Notes</Label>
+              <Textarea
+                id="tastingNotes"
+                name="tastingNotes"
+                placeholder="Describe the flavor, aroma, and overall experience..."
+                rows={3}
               />
             </div>
             
-            <div>
-              <Label htmlFor="origin">Origin</Label>
-              <Input
-                id="origin"
-                value={newEntry.origin || ''}
-                onChange={(e) => setNewEntry({...newEntry, origin: e.target.value})}
-                placeholder="Ethiopia, Yirgacheffe"
-              />
+            <div className="flex space-x-4">
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Adding Entry...
+                  </>
+                ) : (
+                  "Add Coffee Entry"
+                )}
+              </Button>
             </div>
-            
-            <div>
-              <Label htmlFor="process">Process</Label>
-              <Select value={newEntry.process} onValueChange={(value) => setNewEntry({...newEntry, process: value})}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select process" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Washed">Washed</SelectItem>
-                  <SelectItem value="Natural">Natural</SelectItem>
-                  <SelectItem value="Honey">Honey</SelectItem>
-                  <SelectItem value="Semi-Washed">Semi-Washed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <Label htmlFor="roastLevel">Roast Level</Label>
-              <Select value={newEntry.roastLevel} onValueChange={(value) => setNewEntry({...newEntry, roastLevel: value})}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select roast" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Light">Light</SelectItem>
-                  <SelectItem value="Light-Medium">Light-Medium</SelectItem>
-                  <SelectItem value="Medium">Medium</SelectItem>
-                  <SelectItem value="Medium-Dark">Medium-Dark</SelectItem>
-                  <SelectItem value="Dark">Dark</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <Label htmlFor="brewMethod">Brew Method</Label>
-              <Select value={newEntry.brewMethod} onValueChange={(value) => setNewEntry({...newEntry, brewMethod: value})}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select method" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="V60">V60</SelectItem>
-                  <SelectItem value="Chemex">Chemex</SelectItem>
-                  <SelectItem value="AeroPress">AeroPress</SelectItem>
-                  <SelectItem value="French Press">French Press</SelectItem>
-                  <SelectItem value="Espresso">Espresso</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <Label htmlFor="waterTemp">Water Temperature (°C)</Label>
-              <Input
-                id="waterTemp"
-                type="number"
-                value={newEntry.waterTemp || ''}
-                onChange={(e) => setNewEntry({...newEntry, waterTemp: Number(e.target.value)})}
-                placeholder="94"
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="brewTime">Brew Time</Label>
-              <Input
-                id="brewTime"
-                value={newEntry.brewTime || ''}
-                onChange={(e) => setNewEntry({...newEntry, brewTime: e.target.value})}
-                placeholder="2:45"
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="ratio">Ratio</Label>
-              <Input
-                id="ratio"
-                value={newEntry.ratio || ''}
-                onChange={(e) => setNewEntry({...newEntry, ratio: e.target.value})}
-                placeholder="1:16"
-              />
-            </div>
-          </div>
-          
-          <div className="mb-4">
-            <Label>Rating</Label>
-            <StarRating 
-              rating={newEntry.rating || 0} 
-              onRatingChange={(rating) => setNewEntry({...newEntry, rating})}
-              interactive={true}
-            />
-          </div>
-          
-          <div className="mb-4">
-            <Label>Flavor Profile</Label>
-            <div className="flex flex-wrap gap-2 mt-2 mb-3">
-              {flavorOptions.map(flavor => (
-                <Button
-                  key={flavor}
-                  type="button"
-                  variant={newEntry.flavorProfile?.includes(flavor) ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => 
-                    newEntry.flavorProfile?.includes(flavor) 
-                      ? removeFlavorProfile(flavor)
-                      : addFlavorProfile(flavor)
-                  }
-                >
-                  {flavor}
-                </Button>
-              ))}
-            </div>
-          </div>
-          
-          <div className="mb-6">
-            <Label htmlFor="tastingNotes">Tasting Notes</Label>
-            <Textarea
-              id="tastingNotes"
-              value={newEntry.tastingNotes || ''}
-              onChange={(e) => setNewEntry({...newEntry, tastingNotes: e.target.value})}
-              placeholder="Describe the flavor, aroma, and overall experience..."
-              rows={3}
-            />
-          </div>
-          
-          <div className="flex space-x-4">
-            <Button onClick={handleSubmit}>Save Entry</Button>
-            <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
-          </div>
+          </form>
         </Card>
       )}
 
-      {/* Entries Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {filteredEntries.map((entry) => (
-          <Card key={entry.id} className="coffee-card p-6">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h3 className="text-xl font-bold text-primary">{entry.coffeeName}</h3>
-                <p className="text-muted-foreground">{entry.roaster}</p>
-              </div>
-              <div className="text-right">
-                <StarRating rating={entry.rating} />
-                <p className="text-sm text-muted-foreground mt-1 flex items-center">
-                  <Calendar className="h-3 w-3 mr-1" />
-                  {new Date(entry.date).toLocaleDateString()}
+      {/* Loading State */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-2 text-lg">Loading your coffee entries...</span>
+        </div>
+      ) : (
+        /* Coffee Cards Grid */
+        <div className="grid gap-4 md:gap-6">
+          {filteredEntries.length === 0 ? (
+            <Card className="text-center py-12">
+              <CardContent className="pt-6">
+                <Coffee className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No Coffee Entries Found</h3>
+                <p className="text-muted-foreground mb-4">
+                  {searchTerm || selectedRoaster !== 'all' 
+                    ? 'Try adjusting your search filters' 
+                    : 'Start your coffee journey by adding your first entry'}
                 </p>
-              </div>
-            </div>
-            
-            <div className="space-y-3 mb-4">
-              <div className="flex items-center text-sm">
-                <MapPin className="h-4 w-4 mr-2 text-primary" />
-                <span>{entry.origin}</span>
-              </div>
-              
-              <div className="flex items-center text-sm">
-                <Bean className="h-4 w-4 mr-2 text-primary" />
-                <span>{entry.process} • {entry.roastLevel}</span>
-              </div>
-              
-              <div className="text-sm">
-                <span className="font-medium">Brew:</span> {entry.brewMethod} • {entry.ratio} • {entry.waterTemp}°C
-              </div>
-            </div>
-            
-            <div className="mb-4">
-              <div className="flex flex-wrap gap-1">
-                {entry.flavorProfile.map(flavor => (
-                  <Badge key={flavor} variant="secondary" className="text-xs">
-                    {flavor}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-            
-            <p className="text-sm text-muted-foreground italic">
-              "{entry.tastingNotes}"
-            </p>
-          </Card>
-        ))}
-      </div>
+                <Button onClick={() => setShowForm(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Your First Entry
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            filteredEntries.map((entry) => (
+              <Card key={entry.id} className="hover:shadow-lg transition-shadow">
+                <CardContent className="pt-6">
+                  <div className="flex flex-col md:flex-row md:items-start gap-4">
+                    {/* Coffee Info */}
+                    <div className="flex-1 space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="text-xl font-bold text-foreground">{entry.coffee_name}</h3>
+                          <p className="text-lg text-muted-foreground">{entry.roaster}</p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <StarRating rating={entry.rating} />
+                          <span className="font-semibold ml-2">{entry.rating}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <MapPin className="h-4 w-4" />
+                          {entry.origin}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-4 w-4" />
+                          {new Date(entry.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
 
-      {filteredEntries.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground text-lg">No coffee entries found</p>
-          <p className="text-sm text-muted-foreground mt-2">
-            {searchTerm || filterRoaster !== 'all' 
-              ? 'Try adjusting your search or filter'
-              : 'Start by adding your first coffee entry!'
-            }
-          </p>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant="secondary">{entry.process}</Badge>
+                        <Badge variant="secondary">{entry.roast_level}</Badge>
+                        <Badge variant="outline">{entry.brew_method}</Badge>
+                        {entry.price && <Badge variant="outline">${entry.price}</Badge>}
+                      </div>
+                      
+                      {entry.flavor_profile.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {entry.flavor_profile.map((flavor, index) => (
+                            <Badge key={index} variant="default" className="text-xs">
+                              {flavor}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Brewing Details */}
+                    <div className="md:w-64 bg-muted/30 rounded-lg p-4 space-y-2">
+                      <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+                        Brewing Details
+                      </h4>
+                      <div className="grid grid-cols-2 gap-y-1 text-sm">
+                        <span className="text-muted-foreground">Grind:</span>
+                        <span>{entry.grind_size}</span>
+                        <span className="text-muted-foreground">Water:</span>
+                        <span>{entry.water_temp}°C</span>
+                        <span className="text-muted-foreground">Time:</span>
+                        <span>{entry.brew_time}</span>
+                        <span className="text-muted-foreground">Ratio:</span>
+                        <span>{entry.ratio}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {entry.tasting_notes && (
+                    <div className="mt-4 pt-4 border-t">
+                      <p className="text-sm text-muted-foreground italic">
+                        "{entry.tasting_notes}"
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
       )}
     </div>
   );
 };
+
+export default CoffeeJournal;

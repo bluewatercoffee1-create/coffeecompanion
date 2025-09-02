@@ -14,7 +14,205 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      coffee_entries: {
+        Row: {
+          brew_method: string
+          brew_time: string
+          coffee_name: string
+          created_at: string | null
+          flavor_profile: string[] | null
+          grind_size: string
+          id: string
+          origin: string
+          price: number | null
+          process: string
+          rating: number | null
+          ratio: string
+          roast_level: string
+          roaster: string
+          tasting_notes: string | null
+          updated_at: string | null
+          user_id: string
+          water_temp: number
+        }
+        Insert: {
+          brew_method: string
+          brew_time: string
+          coffee_name: string
+          created_at?: string | null
+          flavor_profile?: string[] | null
+          grind_size: string
+          id?: string
+          origin: string
+          price?: number | null
+          process: string
+          rating?: number | null
+          ratio: string
+          roast_level: string
+          roaster: string
+          tasting_notes?: string | null
+          updated_at?: string | null
+          user_id: string
+          water_temp: number
+        }
+        Update: {
+          brew_method?: string
+          brew_time?: string
+          coffee_name?: string
+          created_at?: string | null
+          flavor_profile?: string[] | null
+          grind_size?: string
+          id?: string
+          origin?: string
+          price?: number | null
+          process?: string
+          rating?: number | null
+          ratio?: string
+          roast_level?: string
+          roaster?: string
+          tasting_notes?: string | null
+          updated_at?: string | null
+          user_id?: string
+          water_temp?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coffee_entries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cupping_sessions: {
+        Row: {
+          acidity: number | null
+          aftertaste: number | null
+          balance: number | null
+          body: number | null
+          clean_cup: number | null
+          coffee_name: string
+          created_at: string | null
+          cupping_protocol: string
+          defects: string[] | null
+          final_rating: string | null
+          flavor: number | null
+          fragrance: number | null
+          id: string
+          notes_crust: string | null
+          notes_dry: string | null
+          notes_finish: string | null
+          notes_flavor: string | null
+          notes_overall: string | null
+          origin: string
+          overall: number | null
+          process: string
+          recommendations: string | null
+          roast_date: string | null
+          roast_level: string
+          roaster: string
+          sweetness: number | null
+          total_score: number | null
+          uniformity: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          acidity?: number | null
+          aftertaste?: number | null
+          balance?: number | null
+          body?: number | null
+          clean_cup?: number | null
+          coffee_name: string
+          created_at?: string | null
+          cupping_protocol: string
+          defects?: string[] | null
+          final_rating?: string | null
+          flavor?: number | null
+          fragrance?: number | null
+          id?: string
+          notes_crust?: string | null
+          notes_dry?: string | null
+          notes_finish?: string | null
+          notes_flavor?: string | null
+          notes_overall?: string | null
+          origin: string
+          overall?: number | null
+          process: string
+          recommendations?: string | null
+          roast_date?: string | null
+          roast_level: string
+          roaster: string
+          sweetness?: number | null
+          total_score?: number | null
+          uniformity?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          acidity?: number | null
+          aftertaste?: number | null
+          balance?: number | null
+          body?: number | null
+          clean_cup?: number | null
+          coffee_name?: string
+          created_at?: string | null
+          cupping_protocol?: string
+          defects?: string[] | null
+          final_rating?: string | null
+          flavor?: number | null
+          fragrance?: number | null
+          id?: string
+          notes_crust?: string | null
+          notes_dry?: string | null
+          notes_finish?: string | null
+          notes_flavor?: string | null
+          notes_overall?: string | null
+          origin?: string
+          overall?: number | null
+          process?: string
+          recommendations?: string | null
+          roast_date?: string | null
+          roast_level?: string
+          roaster?: string
+          sweetness?: number | null
+          total_score?: number | null
+          uniformity?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cupping_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          display_name: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_name?: string | null
+          id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_name?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
