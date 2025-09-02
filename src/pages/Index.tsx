@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Timer, Book, Calculator, Wrench, Trophy, Coffee, ChevronRight } from "lucide-react";
+import { Timer, Book, Calculator, Wrench, Trophy, Coffee, ChevronRight, LogOut, User } from "lucide-react";
 import heroImage from "@/assets/coffee-hero.jpg";
 import { BrewTimer } from "@/components/BrewTimer";
 import CoffeeJournal from "@/components/CoffeeJournal";
@@ -9,9 +10,33 @@ import { RatioCalculator } from "@/components/RatioCalculator";
 import { BrewingGuides } from "@/components/BrewingGuides";
 import { EquipmentGuide } from "@/components/EquipmentGuide";
 import CuppingNotes from "@/components/CuppingNotes";
+import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
   const [activeFeature, setActiveFeature] = useState<string>('home');
+  const { user, isLoading, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      navigate('/auth');
+    }
+  }, [user, isLoading, navigate]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 flex items-center justify-center">
+        <div className="flex items-center gap-2">
+          <Coffee className="h-8 w-8 text-primary animate-pulse" />
+          <span className="text-lg font-semibold">Loading Coffee Compass...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; // Will redirect to auth
+  }
 
   const features = [
     {
@@ -142,18 +167,31 @@ const Index = () => {
               ☕ Coffee Compass
             </Button>
             
-            <div className="hidden md:flex space-x-2">
-              {features.map((feature) => (
-                <Button
-                  key={feature.id}
-                  variant={activeFeature === feature.id ? "default" : "ghost"}
-                  onClick={() => setActiveFeature(feature.id)}
-                  className="text-sm"
-                >
-                  <feature.icon className="h-4 w-4 mr-2" />
-                  {feature.title}
+            <div className="flex items-center gap-4">
+              <div className="hidden md:flex space-x-2">
+                {features.map((feature) => (
+                  <Button
+                    key={feature.id}
+                    variant={activeFeature === feature.id ? "default" : "ghost"}
+                    onClick={() => setActiveFeature(feature.id)}
+                    className="text-sm"
+                  >
+                    <feature.icon className="h-4 w-4 mr-2" />
+                    {feature.title}
+                  </Button>
+                ))}
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <User className="h-4 w-4" />
+                  <span>Welcome back!</span>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => signOut()}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
                 </Button>
-              ))}
+              </div>
             </div>
           </div>
         </div>
