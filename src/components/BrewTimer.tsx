@@ -1,144 +1,27 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Play, Pause, RotateCcw, Timer, Droplets, Thermometer } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-
-interface BrewStep {
-  time: number;
-  action: string;
-  waterAmount?: number;
-  temperature?: number;
-  technique?: string;
-}
-
-interface BrewMethod {
-  name: string;
-  defaultRatio: number;
-  defaultGrams: number;
-  baseSteps: BrewStep[];
-  flavorProfile: string;
-  difficulty: string;
-}
-
-const brewMethods: Record<string, BrewMethod> = {
-  v60: {
-    name: "Hario V60",
-    defaultRatio: 16.7,
-    defaultGrams: 22,
-    flavorProfile: "Bright, Clean, Complex",
-    difficulty: "Intermediate",
-    baseSteps: [
-      { time: 0, action: "Bloom", waterAmount: 0.15, temperature: 96, technique: "Gentle spiral pour from center" },
-      { time: 30, action: "First Pour", waterAmount: 0.3, temperature: 94, technique: "Slow spiral, maintain bed level" },
-      { time: 60, action: "Second Pour", waterAmount: 0.25, temperature: 92, technique: "Center pour, avoid walls" },
-      { time: 90, action: "Final Pour", waterAmount: 0.3, temperature: 90, technique: "Gentle finish pour" },
-      { time: 120, action: "Drawdown", technique: "Let drip finish, target 2:30-3:00 total" }
-    ]
-  },
-  chemex: {
-    name: "Chemex",
-    defaultRatio: 15,
-    defaultGrams: 30,
-    flavorProfile: "Clean, Bright, Tea-like",
-    difficulty: "Beginner",
-    baseSteps: [
-      { time: 0, action: "Bloom", waterAmount: 0.2, temperature: 96, technique: "Even saturation, 45s bloom" },
-      { time: 45, action: "First Pour", waterAmount: 0.4, temperature: 94, technique: "Slow spiral outward" },
-      { time: 105, action: "Second Pour", waterAmount: 0.4, temperature: 92, technique: "Maintain water level" },
-      { time: 165, action: "Drawdown", technique: "Total brew time 4-5 minutes" }
-    ]
-  },
-  aeropress: {
-    name: "AeroPress",
-    defaultRatio: 14,
-    defaultGrams: 18,
-    flavorProfile: "Full-bodied, Clean, Versatile",
-    difficulty: "Beginner",
-    baseSteps: [
-      { time: 0, action: "Add Coffee & Water", temperature: 85, technique: "Inverted method, all water at once" },
-      { time: 10, action: "Stir", technique: "3 gentle stirs with paddle" },
-      { time: 60, action: "Flip & Press", technique: "Steady 30-second press" },
-      { time: 90, action: "Complete", technique: "Stop at hiss, dilute if needed" }
-    ]
-  },
-  espresso: {
-    name: "Espresso",
-    defaultRatio: 2,
-    defaultGrams: 18,
-    flavorProfile: "Intense, Concentrated, Syrupy",
-    difficulty: "Expert",
-    baseSteps: [
-      { time: 0, action: "Pre-infusion", temperature: 93, technique: "3-bar pressure, 2-4 seconds" },
-      { time: 4, action: "Extraction", temperature: 93, technique: "9-bar pressure, watch flow" },
-      { time: 25, action: "Complete", technique: "Target 25-30 seconds total" }
-    ]
-  }
-};
+import { Badge } from "@/components/ui/badge";
+import { Play, Pause, RotateCcw, Clock, Droplets, Target, Scale, ChevronLeft, Coffee } from "lucide-react";
+import { getGuidesByMethod, getAllMethods, BrewingGuide } from "@/data/brewingGuides";
 
 export const BrewTimer = () => {
-  const [selectedMethod, setSelectedMethod] = useState<string>('v60');
-  const [selectedGuide, setSelectedGuide] = useState<string>('');
-  const [coffeeGrams, setCoffeeGrams] = useState<number>(22);
-  const [customRatio, setCustomRatio] = useState<number>(16.7);
+  const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [scaledSteps, setScaledSteps] = useState<BrewStep[]>([]);
-  const { toast } = useToast();
+  const [brewMethod, setBrewMethod] = useState<string>('');
+  const [selectedGuide, setSelectedGuide] = useState<BrewingGuide | null>(null);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [customRatio, setCustomRatio] = useState('1:16');
+  const [coffeeAmount, setCoffeeAmount] = useState(25);
+  const [showMethodSelection, setShowMethodSelection] = useState(true);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const method = brewMethods[selectedMethod];
-  const currentRatio = customRatio;
-  const totalWater = Math.round(coffeeGrams * currentRatio);
-
-  useEffect(() => {
-    // Scale recipe based on coffee grams and update ratio when method changes
-    setCustomRatio(method.defaultRatio);
-  }, [selectedMethod, method]);
-
-  useEffect(() => {
-    // Scale recipe based on coffee grams
-    const ratio = coffeeGrams / method.defaultGrams;
-    const scaled = method.baseSteps.map(step => ({
-      ...step,
-      waterAmount: step.waterAmount ? Math.round(step.waterAmount * totalWater) : undefined
-    }));
-    setScaledSteps(scaled);
-    setCurrentStepIndex(0);
-    setCurrentTime(0);
-  }, [selectedMethod, coffeeGrams, method, totalWater, customRatio]);
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    
-    if (isRunning) {
-      interval = setInterval(() => {
-        setCurrentTime(prev => {
-          const newTime = prev + 1;
-          
-          // Check for next step
-          const nextStepIndex = scaledSteps.findIndex((step, index) => 
-            index > currentStepIndex && step.time === newTime
-          );
-          
-          if (nextStepIndex !== -1) {
-            setCurrentStepIndex(nextStepIndex);
-            toast({
-              title: `Step ${nextStepIndex + 1}: ${scaledSteps[nextStepIndex].action}`,
-              description: scaledSteps[nextStepIndex].technique || `Time: ${formatTime(newTime)}`,
-            });
-          }
-          
-          return newTime;
-        });
-      }, 1000);
-    }
-    
-    return () => clearInterval(interval);
-  }, [isRunning, scaledSteps, currentStepIndex, toast]);
+  const activeRatio = selectedGuide?.ratio || customRatio;
+  const waterAmount = Math.round(coffeeAmount * parseFloat(activeRatio.split(':')[1]));
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -146,214 +29,313 @@ export const BrewTimer = () => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  useEffect(() => {
+    if (isRunning && intervalRef.current === null) {
+      intervalRef.current = setInterval(() => {
+        setTime(prevTime => prevTime + 1);
+      }, 1000);
+    } else if (!isRunning && intervalRef.current !== null) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [isRunning]);
+
   const toggleTimer = () => {
     setIsRunning(!isRunning);
   };
 
-  const resetTimer = () => {
+  const reset = () => {
+    setTime(0);
     setIsRunning(false);
-    setCurrentTime(0);
-    setCurrentStepIndex(0);
+    setCurrentStep(0);
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
   };
 
-  const currentStep = scaledSteps[currentStepIndex];
-  const nextStep = scaledSteps[currentStepIndex + 1];
+  const selectMethod = (method: string) => {
+    setBrewMethod(method);
+    setShowMethodSelection(false);
+    setSelectedGuide(null);
+  };
+
+  const selectGuide = (guide: BrewingGuide) => {
+    setSelectedGuide(guide);
+    setCustomRatio(guide.ratio);
+    reset();
+  };
+
+  const backToMethodSelection = () => {
+    setShowMethodSelection(true);
+    setBrewMethod('');
+    setSelectedGuide(null);
+    reset();
+  };
+
+  const backToGuideSelection = () => {
+    setSelectedGuide(null);
+    reset();
+  };
+
+  // Auto-advance steps based on time
+  useEffect(() => {
+    if (selectedGuide && isRunning) {
+      const currentStepTime = selectedGuide.steps[currentStep];
+      if (currentStepTime) {
+        const [minutes, seconds] = currentStepTime.time.split(':').map(Number);
+        const stepTimeInSeconds = minutes * 60 + seconds;
+        
+        if (time >= stepTimeInSeconds && currentStep < selectedGuide.steps.length - 1) {
+          setCurrentStep(currentStep + 1);
+        }
+      }
+    }
+  }, [time, selectedGuide, currentStep, isRunning]);
+
+  if (showMethodSelection) {
+    return (
+      <div className="max-w-4xl mx-auto p-6 space-y-8">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold mb-4 text-primary">Brew Timer</h1>
+          <p className="text-muted-foreground text-lg">Choose your brewing method to get started</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {getAllMethods().map((method) => (
+            <Card 
+              key={method}
+              className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
+              onClick={() => selectMethod(method)}
+            >
+              <CardContent className="p-6 text-center">
+                <div className="mb-4">
+                  <Coffee className="h-12 w-12 text-primary mx-auto" />
+                </div>
+                <h3 className="text-xl font-semibold text-primary">{method}</h3>
+                <p className="text-muted-foreground mt-2">
+                  {getGuidesByMethod(method).length} brewing guides available
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!selectedGuide) {
+    const methodGuides = getGuidesByMethod(brewMethod);
+    
+    return (
+      <div className="max-w-4xl mx-auto p-6 space-y-8">
+        <div className="flex items-center mb-8">
+          <Button variant="ghost" onClick={backToMethodSelection} className="mr-4">
+            <ChevronLeft className="h-4 w-4 mr-2" />
+            Back to Methods
+          </Button>
+          <div>
+            <h1 className="text-4xl font-bold mb-2 text-primary">{brewMethod} Brewing Guides</h1>
+            <p className="text-muted-foreground text-lg">Select a specific brewing guide to follow</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {methodGuides.map((guide) => (
+            <Card 
+              key={guide.id}
+              className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
+              onClick={() => selectGuide(guide)}
+            >
+              <CardContent className="p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="text-xl font-semibold text-primary">{guide.name}</h3>
+                  <Badge variant={
+                    guide.difficulty === 'Beginner' ? 'default' :
+                    guide.difficulty === 'Intermediate' ? 'secondary' :
+                    guide.difficulty === 'Advanced' ? 'outline' : 'destructive'
+                  }>
+                    {guide.difficulty}
+                  </Badge>
+                </div>
+                
+                <p className="text-muted-foreground mb-4">{guide.description}</p>
+                
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-primary" />
+                    <span>{guide.brewTime}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Target className="h-4 w-4 text-primary" />
+                    <span>{guide.ratio}</span>
+                  </div>
+                </div>
+                
+                <div className="flex flex-wrap gap-1 mt-4">
+                  {guide.targetFlavor.slice(0, 3).map(flavor => (
+                    <Badge key={flavor} variant="secondary" className="text-xs">
+                      {flavor}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-8">
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold mb-4 text-primary">Advanced Brew Timer</h1>
-        <p className="text-muted-foreground text-lg">Precision timing with gram-based recipe scaling</p>
+      <div className="flex items-center mb-8">
+        <Button variant="ghost" onClick={backToGuideSelection} className="mr-4">
+          <ChevronLeft className="h-4 w-4 mr-2" />
+          Back to Guides
+        </Button>
+        <div>
+          <h1 className="text-4xl font-bold mb-2 text-primary">{selectedGuide.name}</h1>
+          <p className="text-muted-foreground text-lg">Follow the step-by-step guide</p>
+        </div>
       </div>
 
-      {/* Method & Settings */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="coffee-card p-6">
-          <h3 className="text-xl font-semibold mb-4 text-primary">Brew Settings</h3>
-          
-          <div className="space-y-4">
+      {/* Recipe Overview */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="p-4 text-center">
+          <div className="text-2xl font-bold text-primary">{selectedGuide.waterTemp}°C</div>
+          <div className="text-sm text-muted-foreground">Water Temp</div>
+        </Card>
+        <Card className="p-4 text-center">
+          <div className="text-2xl font-bold text-primary">{activeRatio}</div>
+          <div className="text-sm text-muted-foreground">Ratio</div>
+        </Card>
+        <Card className="p-4 text-center">
+          <div className="text-2xl font-bold text-primary">{coffeeAmount}g</div>
+          <div className="text-sm text-muted-foreground">Coffee</div>
+        </Card>
+        <Card className="p-4 text-center">
+          <div className="text-2xl font-bold text-primary">{waterAmount}g</div>
+          <div className="text-sm text-muted-foreground">Water</div>
+        </Card>
+      </div>
+
+      {/* Ratio Adjustment */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="method">Brewing Method</Label>
-              <Select value={selectedMethod} onValueChange={setSelectedMethod}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select method" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(brewMethods).map(([key, method]) => (
-                    <SelectItem key={key} value={key}>{method.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <Label htmlFor="grams">Coffee Amount (grams)</Label>
+              <Label htmlFor="coffee-amount">Coffee Amount (g)</Label>
               <Input
-                id="grams"
+                id="coffee-amount"
                 type="number"
-                value={coffeeGrams}
-                onChange={(e) => setCoffeeGrams(Number(e.target.value))}
-                className="mt-1"
+                value={coffeeAmount}
+                onChange={(e) => setCoffeeAmount(Number(e.target.value))}
               />
             </div>
-            
             <div>
-              <Label htmlFor="ratio">Water Ratio (1:X)</Label>
+              <Label htmlFor="ratio">Custom Ratio (optional)</Label>
               <Input
                 id="ratio"
-                type="number"
-                step="0.1"
                 value={customRatio}
-                onChange={(e) => setCustomRatio(Number(e.target.value))}
-                className="mt-1"
+                onChange={(e) => setCustomRatio(e.target.value)}
+                placeholder={selectedGuide.ratio}
               />
             </div>
           </div>
-        </Card>
+        </CardContent>
+      </Card>
 
-        <Card className="coffee-card p-6">
-          <h3 className="text-xl font-semibold mb-4 text-primary">Recipe Info</h3>
-          
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Method:</span>
-              <span className="font-medium">{method.name}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Coffee:</span>
-              <span className="font-medium">{coffeeGrams}g</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Water:</span>
-              <span className="font-medium">{totalWater}ml</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Ratio:</span>
-              <span className="font-medium">1:{currentRatio}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Profile:</span>
-              <span className="font-medium text-sm">{method.flavorProfile}</span>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Timer Display */}
-      <Card className="coffee-card p-8 text-center">
-        <div className="space-y-6">
-          <div className="text-8xl font-bold text-primary">
-            {formatTime(currentTime)}
+      {/* Timer Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center text-primary">
+            <Clock className="mr-2 h-5 w-5" />
+            Timer & Current Step
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-center">
+          <div className="text-6xl font-mono font-bold text-primary mb-6">
+            {formatTime(time)}
           </div>
           
-          <div className="flex justify-center space-x-4">
-            <Button 
-              onClick={toggleTimer}
-              size="lg"
-              className="px-8"
-              variant={isRunning ? "secondary" : "default"}
-            >
+          <div className="flex justify-center space-x-4 mb-6">
+            <Button onClick={toggleTimer} size="lg">
               {isRunning ? <Pause className="mr-2 h-5 w-5" /> : <Play className="mr-2 h-5 w-5" />}
               {isRunning ? 'Pause' : 'Start'}
             </Button>
-            
-            <Button onClick={resetTimer} size="lg" variant="outline" className="px-8">
+            <Button onClick={reset} variant="outline" size="lg">
               <RotateCcw className="mr-2 h-5 w-5" />
               Reset
             </Button>
           </div>
-        </div>
-      </Card>
 
-      {/* Current Step */}
-      {currentStep && (
-        <Card className="coffee-card p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-semibold text-primary flex items-center">
-              <Timer className="mr-2 h-5 w-5" />
-              Step {currentStepIndex + 1}: {currentStep.action}
-            </h3>
-            <div className="text-sm text-muted-foreground">
-              {formatTime(currentStep.time)}
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {currentStep.waterAmount && (
-              <div className="flex items-center space-x-2">
-                <Droplets className="h-4 w-4 text-primary" />
-                <span className="text-sm">
-                  <strong>{currentStep.waterAmount}ml</strong> water
-                </span>
+          {/* Current Step Display */}
+          {selectedGuide.steps[currentStep] && (
+            <div className="bg-primary/5 border border-primary/20 p-6 rounded-lg mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-semibold text-primary">
+                  Step {selectedGuide.steps[currentStep].step}: {selectedGuide.steps[currentStep].action}
+                </h3>
+                <Badge variant="outline">{selectedGuide.steps[currentStep].time}</Badge>
               </div>
-            )}
-            
-            {currentStep.temperature && (
-              <div className="flex items-center space-x-2">
-                <Thermometer className="h-4 w-4 text-primary" />
-                <span className="text-sm">
-                  <strong>{currentStep.temperature}°C</strong>
-                </span>
-              </div>
-            )}
-          </div>
-          
-          {currentStep.technique && (
-            <div className="mt-4 p-4 bg-secondary rounded-lg">
-              <p className="text-sm font-medium">{currentStep.technique}</p>
+              <p className="text-lg mb-3">{selectedGuide.steps[currentStep].technique}</p>
+              {selectedGuide.steps[currentStep].scienceNote && (
+                <p className="text-sm text-muted-foreground italic">
+                  💡 {selectedGuide.steps[currentStep].scienceNote}
+                </p>
+              )}
             </div>
           )}
-        </Card>
-      )}
 
-      {/* Next Step Preview */}
-      {nextStep && (
-        <Card className="coffee-card p-4 border-dashed">
-          <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-sm">
-              Next: {nextStep.action} at {formatTime(nextStep.time)}
-            </span>
-          </div>
-        </Card>
-      )}
-
-      {/* All Steps Overview */}
-      <Card className="coffee-card p-6">
-        <h3 className="text-xl font-semibold mb-4 text-primary">Brewing Steps</h3>
-        
-        <div className="space-y-3">
-          {scaledSteps.map((step, index) => (
-            <div 
-              key={index}
-              className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
-                index === currentStepIndex 
-                  ? 'bg-primary/10 border border-primary/20' 
-                  : index < currentStepIndex 
-                    ? 'bg-secondary/50' 
-                    : 'bg-secondary/20'
-              }`}
-            >
-              <div className="flex items-center space-x-3">
-                <div className={`w-2 h-2 rounded-full ${
-                  index === currentStepIndex 
-                    ? 'bg-primary' 
-                    : index < currentStepIndex 
-                      ? 'bg-primary/50' 
-                      : 'bg-muted-foreground/30'
-                }`} />
-                <span className="font-medium">{step.action}</span>
-                {step.waterAmount && (
-                  <span className="text-sm text-muted-foreground">
-                    {step.waterAmount}ml
-                  </span>
-                )}
-              </div>
-              <span className="text-sm text-muted-foreground">
-                {formatTime(step.time)}
-              </span>
+          {/* Step Progress */}
+          <div className="mb-6">
+            <div className="flex justify-between text-sm text-muted-foreground mb-2">
+              <span>Step {currentStep + 1} of {selectedGuide.steps.length}</span>
+              <span>{Math.round(((currentStep + 1) / selectedGuide.steps.length) * 100)}% Complete</span>
             </div>
-          ))}
-        </div>
+            <Progress value={((currentStep + 1) / selectedGuide.steps.length) * 100} className="w-full" />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Brewing Steps Overview */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center text-primary">
+            <Droplets className="mr-2 h-5 w-5" />
+            All Brewing Steps
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {selectedGuide.steps.map((step, index) => (
+              <div 
+                key={step.step} 
+                className={`p-4 rounded-lg border transition-all ${
+                  index === currentStep 
+                    ? 'border-primary bg-primary/5' 
+                    : index < currentStep 
+                    ? 'border-green-200 bg-green-50 opacity-60' 
+                    : 'border-muted bg-muted/30'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className={`font-semibold ${index === currentStep ? 'text-primary' : 'text-foreground'}`}>
+                    Step {step.step}: {step.action}
+                  </h4>
+                  <span className="text-sm text-muted-foreground">{step.time}</span>
+                </div>
+                <p className="text-sm">{step.technique}</p>
+              </div>
+            ))}
+          </div>
+        </CardContent>
       </Card>
     </div>
   );

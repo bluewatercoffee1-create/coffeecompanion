@@ -6,21 +6,36 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Star, Search, Coffee, Calendar, MapPin, Loader2 } from "lucide-react";
+import { Plus, Star, Search, Coffee, Calendar, MapPin, Loader2, Edit2, ChevronDown, ChevronUp, X } from "lucide-react";
 import { useCoffeeEntries, CoffeeEntryInput } from "@/hooks/useCoffeeData";
+import { CoffeeEntryForm } from "./CoffeeEntryForm";
 
 const CoffeeJournal = () => {
-  const { entries, isLoading, addEntry } = useCoffeeEntries();
+  const { entries, isLoading, addEntry, updateEntry } = useCoffeeEntries();
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRoaster, setSelectedRoaster] = useState<string>('all');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<string | null>(null);
+  const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
 
   const handleAddEntry = async (newEntry: CoffeeEntryInput) => {
     setIsSubmitting(true);
     try {
       await addEntry(newEntry);
       setShowForm(false);
+    } catch (error) {
+      // Error handled by the hook
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleUpdateEntry = async (id: string, updatedEntry: CoffeeEntryInput) => {
+    setIsSubmitting(true);
+    try {
+      await updateEntry(id, updatedEntry);
+      setEditingEntry(null);
     } catch (error) {
       // Error handled by the hook
     } finally {
@@ -51,7 +66,7 @@ const CoffeeJournal = () => {
     </div>
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent, entryId?: string) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
     
@@ -77,7 +92,11 @@ const CoffeeJournal = () => {
       price: Number(formData.get('price')) || undefined
     };
 
-    handleAddEntry(entry);
+    if (entryId) {
+      handleUpdateEntry(entryId, entry);
+    } else {
+      handleAddEntry(entry);
+    }
   };
 
   return (
@@ -123,194 +142,11 @@ const CoffeeJournal = () => {
       {showForm && (
         <Card className="p-6">
           <h3 className="text-xl font-semibold mb-6 text-primary">New Coffee Entry</h3>
-          
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="coffeeName">Coffee Name *</Label>
-                <Input
-                  id="coffeeName"
-                  name="coffeeName"
-                  placeholder="Ethiopian Yirgacheffe"
-                  required
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="roaster">Roaster *</Label>
-                <Input
-                  id="roaster"
-                  name="roaster"
-                  placeholder="Blue Bottle Coffee"
-                  required
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="origin">Origin</Label>
-                <Input
-                  id="origin"
-                  name="origin"
-                  placeholder="Ethiopia, Yirgacheffe"
-                />
-              </div>
-              
-                <div>
-                <Label htmlFor="process">Process</Label>
-                <Select name="process">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select process" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Washed">Washed</SelectItem>
-                    <SelectItem value="Natural">Natural</SelectItem>
-                    <SelectItem value="Honey - Yellow">Honey - Yellow</SelectItem>
-                    <SelectItem value="Honey - Red">Honey - Red</SelectItem>
-                    <SelectItem value="Honey - Black">Honey - Black</SelectItem>
-                    <SelectItem value="Honey - White">Honey - White</SelectItem>
-                    <SelectItem value="Semi-Washed">Semi-Washed</SelectItem>
-                    <SelectItem value="Anaerobic Natural">Anaerobic Natural</SelectItem>
-                    <SelectItem value="Anaerobic Washed">Anaerobic Washed</SelectItem>
-                    <SelectItem value="Anaerobic Honey">Anaerobic Honey</SelectItem>
-                    <SelectItem value="Carbonic Maceration">Carbonic Maceration</SelectItem>
-                    <SelectItem value="Thermal Shock">Thermal Shock</SelectItem>
-                    <SelectItem value="Extended Fermentation">Extended Fermentation</SelectItem>
-                    <SelectItem value="Lactic Process">Lactic Process</SelectItem>
-                    <SelectItem value="Yeast Inoculation">Yeast Inoculation</SelectItem>
-                    <SelectItem value="Co-fermentation">Co-fermentation</SelectItem>
-                    <SelectItem value="Experimental">Experimental</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Label htmlFor="roastLevel">Roast Level</Label>
-                <Select name="roastLevel">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select roast" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Light">Light</SelectItem>
-                    <SelectItem value="Light-Medium">Light-Medium</SelectItem>
-                    <SelectItem value="Medium">Medium</SelectItem>
-                    <SelectItem value="Medium-Dark">Medium-Dark</SelectItem>
-                    <SelectItem value="Dark">Dark</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Label htmlFor="brewMethod">Brew Method</Label>
-                <Select name="brewMethod">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select method" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="V60">V60</SelectItem>
-                    <SelectItem value="Chemex">Chemex</SelectItem>
-                    <SelectItem value="AeroPress">AeroPress</SelectItem>
-                    <SelectItem value="French Press">French Press</SelectItem>
-                    <SelectItem value="Espresso">Espresso</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Label htmlFor="grindSize">Grind Size</Label>
-                <Input
-                  id="grindSize"
-                  name="grindSize"
-                  placeholder="Medium-Fine"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="waterTemp">Water Temperature (°C)</Label>
-                <Input
-                  id="waterTemp"
-                  name="waterTemp"
-                  type="number"
-                  placeholder="94"
-                  min="80"
-                  max="100"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="brewTime">Brew Time</Label>
-                <Input
-                  id="brewTime"
-                  name="brewTime"
-                  placeholder="2:45"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="ratio">Ratio</Label>
-                <Input
-                  id="ratio"
-                  name="ratio"
-                  placeholder="1:16"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="rating">Rating (1-5)</Label>
-                <Input
-                  id="rating"
-                  name="rating"
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  max="5"
-                  placeholder="4.5"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="price">Price ($)</Label>
-                <Input
-                  id="price"
-                  name="price"
-                  type="number"
-                  step="0.01"
-                  placeholder="24.99"
-                />
-              </div>
-            </div>
-            
-            <div>
-              <Label htmlFor="flavorProfile">Flavor Profile (comma-separated)</Label>
-              <Input
-                id="flavorProfile"
-                name="flavorProfile"
-                placeholder="Floral, Citrus, Tea-like, Bright"
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="tastingNotes">Tasting Notes</Label>
-              <Textarea
-                id="tastingNotes"
-                name="tastingNotes"
-                placeholder="Describe the flavor, aroma, and overall experience..."
-                rows={3}
-              />
-            </div>
-            
-            <div className="flex space-x-4">
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Adding Entry...
-                  </>
-                ) : (
-                  "Add Coffee Entry"
-                )}
-              </Button>
-            </div>
-          </form>
+          <CoffeeEntryForm 
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
+            onCancel={() => setShowForm(false)}
+          />
         </Card>
       )}
 
@@ -343,72 +179,141 @@ const CoffeeJournal = () => {
             filteredEntries.map((entry) => (
               <Card key={entry.id} className="hover:shadow-lg transition-shadow">
                 <CardContent className="pt-6">
-                  <div className="flex flex-col md:flex-row md:items-start gap-4">
-                    {/* Coffee Info */}
-                    <div className="flex-1 space-y-3">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="text-xl font-bold text-foreground">{entry.coffee_name}</h3>
-                          <p className="text-lg text-muted-foreground">{entry.roaster}</p>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <StarRating rating={entry.rating} />
-                          <span className="font-semibold ml-2">{entry.rating}</span>
-                        </div>
+                  {editingEntry === entry.id ? (
+                    // Edit Form
+                    <div>
+                      <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-xl font-semibold text-primary">Edit Coffee Entry</h3>
+                        <Button variant="outline" size="sm" onClick={() => setEditingEntry(null)}>
+                          <X className="h-4 w-4" />
+                        </Button>
                       </div>
-                      
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <MapPin className="h-4 w-4" />
-                          {entry.origin}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          {new Date(entry.created_at).toLocaleDateString()}
-                        </div>
-                      </div>
+                      <CoffeeEntryForm 
+                        onSubmit={handleSubmit}
+                        isSubmitting={isSubmitting}
+                        editingEntry={entry}
+                        onCancel={() => setEditingEntry(null)}
+                      />
+                    </div>
+                  ) : (
+                    // Display View
+                    <div 
+                      className="cursor-pointer"
+                      onClick={() => setExpandedEntry(expandedEntry === entry.id ? null : entry.id)}
+                    >
+                      <div className="flex flex-col md:flex-row md:items-start gap-4">
+                        {/* Coffee Info */}
+                        <div className="flex-1 space-y-3">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h3 className="text-xl font-bold text-foreground">{entry.coffee_name}</h3>
+                              <p className="text-lg text-muted-foreground">{entry.roaster}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingEntry(entry.id);
+                                }}
+                              >
+                                <Edit2 className="h-4 w-4" />
+                              </Button>
+                              <div className="flex items-center gap-1">
+                                <StarRating rating={entry.rating} />
+                                <span className="font-semibold ml-2">{entry.rating}</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <MapPin className="h-4 w-4" />
+                              {entry.origin}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Calendar className="h-4 w-4" />
+                              {new Date(entry.created_at).toLocaleDateString()}
+                            </div>
+                          </div>
 
-                      <div className="flex flex-wrap gap-2">
-                        <Badge variant="secondary">{entry.process}</Badge>
-                        <Badge variant="secondary">{entry.roast_level}</Badge>
-                        <Badge variant="outline">{entry.brew_method}</Badge>
-                        {entry.price && <Badge variant="outline">${entry.price}</Badge>}
+                          <div className="flex flex-wrap gap-2">
+                            <Badge variant="secondary">{entry.process}</Badge>
+                            <Badge variant="secondary">{entry.roast_level}</Badge>
+                            <Badge variant="outline">{entry.brew_method}</Badge>
+                            {entry.price && <Badge variant="outline">${entry.price}</Badge>}
+                          </div>
+                          
+                          {entry.flavor_profile.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {entry.flavor_profile.map((flavor, index) => (
+                                <Badge key={index} variant="default" className="text-xs">
+                                  {flavor}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Expand/Collapse indicator */}
+                          <div className="flex items-center justify-between pt-2">
+                            <span className="text-sm text-muted-foreground">
+                              Click to {expandedEntry === entry.id ? 'collapse' : 'expand'} details
+                            </span>
+                            {expandedEntry === entry.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                          </div>
+                        </div>
+
+                        {/* Brewing Details - Always visible */}
+                        <div className="md:w-64 bg-muted/30 rounded-lg p-4 space-y-2">
+                          <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+                            Brewing Details
+                          </h4>
+                          <div className="grid grid-cols-2 gap-y-1 text-sm">
+                            <span className="text-muted-foreground">Grind:</span>
+                            <span>{entry.grind_size}</span>
+                            <span className="text-muted-foreground">Water:</span>
+                            <span>{entry.water_temp}°C</span>
+                            <span className="text-muted-foreground">Time:</span>
+                            <span>{entry.brew_time}</span>
+                            <span className="text-muted-foreground">Ratio:</span>
+                            <span>{entry.ratio}</span>
+                          </div>
+                        </div>
                       </div>
                       
-                      {entry.flavor_profile.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                          {entry.flavor_profile.map((flavor, index) => (
-                            <Badge key={index} variant="default" className="text-xs">
-                              {flavor}
-                            </Badge>
-                          ))}
+                      {/* Expanded Details */}
+                      {expandedEntry === entry.id && (
+                        <div className="mt-6 pt-6 border-t space-y-4 animate-fade-in">
+                          {entry.tasting_notes && (
+                            <div>
+                              <h4 className="font-semibold text-primary mb-2">Tasting Notes</h4>
+                              <p className="text-sm text-muted-foreground italic bg-muted/30 p-4 rounded-lg">
+                                "{entry.tasting_notes}"
+                              </p>
+                            </div>
+                          )}
+                          
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                            <div>
+                              <span className="font-semibold text-primary">Created:</span>
+                              <p>{new Date(entry.created_at).toLocaleString()}</p>
+                            </div>
+                            <div>
+                              <span className="font-semibold text-primary">Updated:</span>
+                              <p>{new Date(entry.updated_at).toLocaleString()}</p>
+                            </div>
+                            <div>
+                              <span className="font-semibold text-primary">Method:</span>
+                              <p>{entry.brew_method}</p>
+                            </div>
+                            <div>
+                              <span className="font-semibold text-primary">Process:</span>
+                              <p>{entry.process}</p>
+                            </div>
+                          </div>
                         </div>
                       )}
-                    </div>
-
-                    {/* Brewing Details */}
-                    <div className="md:w-64 bg-muted/30 rounded-lg p-4 space-y-2">
-                      <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-                        Brewing Details
-                      </h4>
-                      <div className="grid grid-cols-2 gap-y-1 text-sm">
-                        <span className="text-muted-foreground">Grind:</span>
-                        <span>{entry.grind_size}</span>
-                        <span className="text-muted-foreground">Water:</span>
-                        <span>{entry.water_temp}°C</span>
-                        <span className="text-muted-foreground">Time:</span>
-                        <span>{entry.brew_time}</span>
-                        <span className="text-muted-foreground">Ratio:</span>
-                        <span>{entry.ratio}</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {entry.tasting_notes && (
-                    <div className="mt-4 pt-4 border-t">
-                      <p className="text-sm text-muted-foreground italic">
-                        "{entry.tasting_notes}"
-                      </p>
                     </div>
                   )}
                 </CardContent>

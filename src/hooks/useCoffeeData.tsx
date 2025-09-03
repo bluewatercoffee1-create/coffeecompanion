@@ -20,6 +20,7 @@ export interface CoffeeEntry {
   flavor_profile: string[];
   price?: number;
   created_at: string;
+  updated_at: string;
 }
 
 export interface CoffeeEntryInput {
@@ -107,6 +108,43 @@ export const useCoffeeEntries = () => {
     }
   };
 
+  const updateEntry = async (id: string, entry: CoffeeEntryInput) => {
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to update entries",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('coffee_entries')
+        .update(entry)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setEntries(entries.map(e => e.id === id ? data : e));
+      toast({
+        title: "Success",
+        description: "Coffee entry updated successfully",
+      });
+      
+      return data;
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update coffee entry",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
   useEffect(() => {
     fetchEntries();
   }, [user]);
@@ -115,6 +153,7 @@ export const useCoffeeEntries = () => {
     entries,
     isLoading,
     addEntry,
+    updateEntry,
     refetch: fetchEntries,
   };
 };
