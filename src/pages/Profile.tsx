@@ -3,21 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfileData } from '@/hooks/useProfileData';
 import { useProfile } from '@/hooks/useProfile';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Heart, MessageCircle, Plus, UserPlus, Check, X, Clock, ArrowLeft, Camera, Upload, Edit, Users } from 'lucide-react';
+import { User, Heart, MessageCircle, Plus, Check, X, Edit, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { BrewGuidesSection } from '@/components/BrewGuidesSection';
 import { FriendSearch } from '@/components/FriendSearch';
+import MobileHeader from '@/components/MobileHeader';
 
 export const Profile = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const {
     posts,
@@ -46,61 +47,34 @@ export const Profile = () => {
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const [editingProfile, setEditingProfile] = useState({ display_name: '' });
 
-  const handleBackToApp = () => {
-    navigate('/');
-  };
-
-  const handleFileUpload = async (file: File, type: 'avatar' | 'background') => {
-    if (!file) return;
-
-    if (file.size > 5 * 1024 * 1024) { // 5MB limit
-      toast.error('File size must be less than 5MB');
-      return;
-    }
-
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please upload an image file');
-      return;
-    }
-
-    if (type === 'avatar') {
-      await updateAvatar(file);
-    } else {
-      await updateBackground(file);
+  const handleCreatePost = async () => {
+    if (!newPost.title.trim() || !newPost.content.trim()) return;
+    
+    try {
+      await createPost({
+        title: newPost.title,
+        content: newPost.content,
+        image_url: newPost.image_url || null
+      });
+      setNewPost({ title: '', content: '', image_url: '' });
+      setShowCreatePost(false);
+      toast.success('Post created successfully!');
+    } catch (error) {
+      console.error('Error creating post:', error);
+      toast.error('Failed to create post');
     }
   };
 
   const handleProfileUpdate = async () => {
-    if (!editingProfile.display_name.trim()) {
-      toast.error('Display name cannot be empty');
-      return;
-    }
-
-    const result = await updateProfile({ display_name: editingProfile.display_name });
-    if (result) {
+    if (!editingProfile.display_name.trim()) return;
+    
+    try {
+      await updateProfile({ display_name: editingProfile.display_name });
       setShowProfileEdit(false);
-    }
-  };
-
-  if (!user) {
-    return (
-      <div className="max-w-4xl mx-auto p-6 text-center">
-        <h1 className="text-4xl font-bold mb-4 text-primary">Profile</h1>
-        <p className="text-muted-foreground">Please sign in to view your profile.</p>
-      </div>
-    );
-  }
-
-  const handleCreatePost = async () => {
-    if (!newPost.title || !newPost.content) {
-      toast.error('Please fill in title and content');
-      return;
-    }
-
-    const result = await createPost(newPost);
-    if (result) {
-      setNewPost({ title: '', content: '', image_url: '' });
-      setShowCreatePost(false);
+      toast.success('Profile updated successfully!');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast.error('Failed to update profile');
     }
   };
 
@@ -108,477 +82,337 @@ export const Profile = () => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      day: 'numeric'
     });
   };
 
   if (loading || profileLoading) {
     return (
-      <div className="max-w-4xl mx-auto p-6 text-center">
-        <div className="animate-pulse">Loading profile...</div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20">
-      {/* Header with Back Button */}
-      <div className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="max-w-6xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <Button 
-              variant="ghost" 
-              onClick={handleBackToApp}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to App
-            </Button>
-            <h1 className="text-xl font-semibold">My Profile</h1>
-            <div></div>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-background pb-20">
+      {/* Mobile Header */}
+      <MobileHeader
+        title="Profile"
+        showBack={true}
+        onBack={() => navigate('/')}
+        onSignOut={() => {
+          signOut();
+        }}
+      />
 
-      {/* Profile Background */}
-      <div 
-        className="relative h-64 bg-gradient-to-r from-primary/20 to-primary/40 bg-cover bg-center"
-        style={profile?.background_url ? { backgroundImage: `url(${profile.background_url})` } : {}}
-      >
-        <div className="absolute inset-0 bg-black/20" />
-        <div className="absolute bottom-4 right-4 z-50">
-          <input
-            type="file"
-            id="background-upload"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handleFileUpload(file, 'background');
-            }}
-          />
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              document.getElementById('background-upload')?.click();
-            }}
-            className="bg-white/95 hover:bg-white text-black shadow-lg border border-white/20 min-h-[40px] min-w-[120px] font-medium"
-          >
-            <Camera className="h-4 w-4 mr-2 flex-shrink-0" />
-            <span className="hidden sm:inline">Change Background</span>
-            <span className="sm:hidden">Change</span>
-          </Button>
-        </div>
-      </div>
-
-      {/* Profile Avatar & Info */}
-      <div className="max-w-6xl mx-auto px-6 -mt-16 relative z-10">
-        <div className="flex flex-col md:flex-row items-start md:items-end gap-6 mb-8">
-          <div className="relative">
-            <div className="w-32 h-32 rounded-full border-4 border-white bg-white shadow-lg overflow-hidden">
-              {profile?.avatar_url ? (
-                <img
-                  src={profile.avatar_url}
-                  alt="Profile"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center">
-                  <User className="h-12 w-12 text-primary" />
-                </div>
-              )}
+      {/* Content */}
+      <div className="pt-14 px-4">
+        {/* Profile Header */}
+        <div className="text-center py-8">
+          <div className="relative inline-block mb-4">
+            <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center border-4 border-primary/20">
+              <User className="h-12 w-12 text-primary" />
             </div>
-            <input
-              type="file"
-              id="avatar-upload"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleFileUpload(file, 'avatar');
-              }}
-            />
             <Button
               size="sm"
-              variant="secondary"
-              className="absolute -bottom-2 -right-2 rounded-full w-10 h-10 p-0"
-              onClick={() => document.getElementById('avatar-upload')?.click()}
+              className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full p-0"
+              onClick={() => {
+                setEditingProfile({ display_name: profile?.display_name || '' });
+                setShowProfileEdit(true);
+              }}
             >
-              <Camera className="h-4 w-4" />
+              <Edit className="h-4 w-4" />
             </Button>
           </div>
-
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <h2 className="text-2xl font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] md:text-foreground md:drop-shadow-none">
-                {profile?.display_name || 'Coffee Enthusiast'}
-              </h2>
-              {user?.email === 'bluewatercoffee1@gmail.com' && (
-                <Badge variant="secondary" className="bg-gradient-to-r from-primary to-primary-variant text-primary-foreground font-semibold shadow-lg">
-                  Creator
-                </Badge>
-              )}
-              <Dialog open={showProfileEdit} onOpenChange={setShowProfileEdit}>
-                <DialogTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setEditingProfile({ display_name: profile?.display_name || '' })}
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Edit Profile</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="display-name">Display Name</Label>
-                      <Input
-                        id="display-name"
-                        value={editingProfile.display_name}
-                        onChange={(e) => setEditingProfile(prev => ({ ...prev, display_name: e.target.value }))}
-                        placeholder="Enter your display name"
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button onClick={handleProfileUpdate}>Save Changes</Button>
-                      <Button variant="outline" onClick={() => setShowProfileEdit(false)}>
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
+          
+          <h1 className="text-2xl font-bold mb-2">
+            {profile?.display_name || 'Coffee Lover'}
+          </h1>
+          
+          {user?.email === 'creator@example.com' && (
+            <Badge variant="secondary" className="mb-4 bg-gradient-to-r from-coffee-gold to-coffee-orange text-white">
+              Creator ✨
+            </Badge>
+          )}
+          
+          <div className="flex justify-center gap-8 py-4">
+            <div className="text-center">
+              <div className="text-xl font-bold text-primary">{userPosts.length}</div>
+              <div className="text-sm text-muted-foreground">Posts</div>
             </div>
-            <div className="flex items-center gap-6 text-sm text-white font-medium drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] md:text-muted-foreground md:drop-shadow-none md:font-normal">
-              <span>{friends.length} Friends</span>
-              <span>{userPosts.length} Posts</span>
-              <span>Member since {new Date(profile?.created_at || '').getFullYear()}</span>
+            <div className="text-center">
+              <div className="text-xl font-bold text-primary">{friends.length}</div>
+              <div className="text-sm text-muted-foreground">Friends</div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="max-w-6xl mx-auto p-6 space-y-8">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4 text-primary">Coffee Community</h1>
-          <p className="text-muted-foreground text-lg">Connect with fellow coffee enthusiasts</p>
-        </div>
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-4 mb-6">
+            <TabsTrigger value="feed" className="text-xs">Feed</TabsTrigger>
+            <TabsTrigger value="posts" className="text-xs">My Posts</TabsTrigger>
+            <TabsTrigger value="friends" className="text-xs">Friends</TabsTrigger>
+            <TabsTrigger value="guides" className="text-xs">Guides</TabsTrigger>
+          </TabsList>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-lg mx-auto grid-cols-5 mb-8">
-          <TabsTrigger value="feed">Feed</TabsTrigger>
-          <TabsTrigger value="myposts">My Posts</TabsTrigger>
-          <TabsTrigger value="brewguides">Brew Guides</TabsTrigger>
-          <TabsTrigger value="friends">Friends</TabsTrigger>
-          <TabsTrigger value="requests">Requests</TabsTrigger>
-        </TabsList>
+          {/* Feed Tab */}
+          <TabsContent value="feed" className="space-y-4">
+            <Button 
+              onClick={() => setShowCreatePost(true)}
+              className="w-full h-12 bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Share your coffee journey
+            </Button>
 
-        <TabsContent value="feed">
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-primary">Community Feed</h2>
-              <Dialog open={showCreatePost} onOpenChange={setShowCreatePost}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Post
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-lg">
-                  <DialogHeader>
-                    <DialogTitle>Create New Post</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="title">Title</Label>
-                      <Input
-                        id="title"
-                        value={newPost.title}
-                        onChange={(e) => setNewPost(prev => ({ ...prev, title: e.target.value }))}
-                        placeholder="What's on your mind?"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="content">Content</Label>
-                      <Textarea
-                        id="content"
-                        value={newPost.content}
-                        onChange={(e) => setNewPost(prev => ({ ...prev, content: e.target.value }))}
-                        placeholder="Share your coffee experience..."
-                        rows={4}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="image">Image URL (optional)</Label>
-                      <Input
-                        id="image"
-                        value={newPost.image_url}
-                        onChange={(e) => setNewPost(prev => ({ ...prev, image_url: e.target.value }))}
-                        placeholder="https://example.com/image.jpg"
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button onClick={handleCreatePost}>Create Post</Button>
-                      <Button variant="outline" onClick={() => setShowCreatePost(false)}>
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            <div className="grid gap-6">
-              {posts.map((post) => (
-                <Card key={post.id} className="coffee-card">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
+            {posts.map((post) => (
+              <Card key={post.id} className="overflow-hidden">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                        <User className="h-5 w-5 text-primary" />
+                      </div>
                       <div>
-                        <CardTitle className="text-lg">{post.title}</CardTitle>
-                        <p className="text-sm text-muted-foreground">
-                          By {post.profiles?.display_name || 'Anonymous'} • {formatDate(post.created_at)}
-                        </p>
+                        <div className="font-semibold text-sm">
+                          {post.profiles?.display_name || 'Coffee Friend'}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {formatDate(post.created_at)}
+                        </div>
                       </div>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="mb-4">{post.content}</p>
-                    {post.image_url && (
-                      <img
-                        src={post.image_url}
-                        alt="Post image"
-                        className="w-full h-64 object-cover rounded-lg mb-4"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                    )}
-                    <div className="flex items-center gap-4">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => togglePostLike(post.id)}
-                        className={`${postLikes.has(post.id) ? 'text-red-500' : 'text-muted-foreground'}`}
-                      >
-                        <Heart className={`h-4 w-4 mr-1 ${postLikes.has(post.id) ? 'fill-current' : ''}`} />
-                        {post.likes_count}
-                      </Button>
-                      <Button variant="ghost" size="sm" className="text-muted-foreground">
-                        <MessageCircle className="h-4 w-4 mr-1" />
-                        {post.comments_count}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <h3 className="font-semibold mb-2">{post.title}</h3>
+                  <p className="text-muted-foreground text-sm mb-4">{post.content}</p>
+                  
+                  <div className="flex items-center gap-4">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => togglePostLike(post.id)}
+                      className={`p-2 ${postLikes[post.id] ? 'text-red-500' : 'text-muted-foreground'}`}
+                    >
+                      <Heart className={`h-4 w-4 mr-1 ${postLikes[post.id] ? 'fill-current' : ''}`} />
+                      <span className="text-xs">{post.likes_count || 0}</span>
+                    </Button>
+                    
+                    <Button variant="ghost" size="sm" className="p-2 text-muted-foreground">
+                      <MessageCircle className="h-4 w-4 mr-1" />
+                      <span className="text-xs">0</span>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </TabsContent>
 
-              {posts.length === 0 && (
-                <Card className="text-center p-8">
-                  <User className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">No posts yet. Be the first to share something!</p>
-                </Card>
-              )}
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="myposts">
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-primary">My Posts</h2>
+          {/* My Posts Tab */}
+          <TabsContent value="posts" className="space-y-4">
+            <div className="text-center py-8">
+              <h3 className="text-lg font-semibold mb-2">Your Coffee Stories</h3>
+              <p className="text-muted-foreground text-sm mb-4">
+                Share your brewing adventures with the community
+              </p>
               <Button onClick={() => setShowCreatePost(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Create Post
               </Button>
             </div>
 
-            <div className="grid gap-6">
-              {userPosts.map((post) => (
-                <Card key={post.id} className="coffee-card">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-lg">{post.title}</CardTitle>
-                        <p className="text-sm text-muted-foreground">
-                          Posted {formatDate(post.created_at)}
-                        </p>
-                      </div>
+            {userPosts.map((post) => (
+              <Card key={post.id}>
+                <CardContent className="p-4">
+                  <h3 className="font-semibold mb-2">{post.title}</h3>
+                  <p className="text-muted-foreground text-sm mb-3">{post.content}</p>
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs text-muted-foreground">
+                      {formatDate(post.created_at)}
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="mb-4">{post.content}</p>
-                    {post.image_url && (
-                      <img
-                        src={post.image_url}
-                        alt="Post image"
-                        className="w-full h-64 object-cover rounded-lg mb-4"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                    )}
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center text-muted-foreground">
-                        <Heart className="h-4 w-4 mr-1" />
-                        {post.likes_count} likes
-                      </div>
-                      <div className="flex items-center text-muted-foreground">
-                        <MessageCircle className="h-4 w-4 mr-1" />
-                        {post.comments_count} comments
-                      </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Heart className="h-3 w-3" />
+                      {post.likes_count || 0}
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </TabsContent>
 
-              {userPosts.length === 0 && (
-                <Card className="text-center p-8">
-                  <User className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground mb-4">
-                    You haven't created any posts yet.
-                  </p>
-                  <Button onClick={() => setShowCreatePost(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Your First Post
-                  </Button>
-                </Card>
-              )}
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="brewguides">
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-primary">My Brew Guides</h2>
-            </div>
-
-            <BrewGuidesSection userId={user.id} />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="friends">
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-primary">Friends</h2>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Users className="h-4 w-4 mr-2" />
-                    Find Friends
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Find Friends</DialogTitle>
-                  </DialogHeader>
-                  <FriendSearch />
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {friends.map((friendship) => {
-                // Determine which user is the friend (not the current user)
-                const friendId = friendship.user_id === user.id ? friendship.friend_id : friendship.user_id;
-                
-                return (
-                  <Card 
-                    key={friendship.id} 
-                    className="coffee-card cursor-pointer hover:scale-105 transition-transform"
-                    onClick={() => navigate(`/profile/${friendId}`)}
-                  >
-                    <CardContent className="p-4 text-center">
-                      <User className="h-12 w-12 text-primary mx-auto mb-3" />
-                      <h3 className="font-semibold mb-2">
-                        {friendship.profiles?.display_name || 'Coffee Friend'}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        Friends since {formatDate(friendship.created_at)}
-                      </p>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-
-              {friends.length === 0 && (
-                <Card className="col-span-full text-center p-8">
-                  <UserPlus className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">
-                    No friends yet. Start connecting with other coffee enthusiasts!
-                  </p>
-                </Card>
-              )}
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="requests">
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-primary">Friend Requests</h2>
-              <Badge variant="secondary">{friendRequests.length} pending</Badge>
-            </div>
-
-            <div className="grid gap-4">
-              {friendRequests.map((request) => (
-                <Card key={request.id} className="coffee-card">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <User className="h-10 w-10 text-primary" />
-                        <div>
-                          <h3 className="font-semibold">
-                            {request.profiles?.display_name || 'Coffee Friend'}
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            Sent {formatDate(request.created_at)}
-                          </p>
+          {/* Friends Tab */}
+          <TabsContent value="friends" className="space-y-4">
+            <div className="space-y-4">
+              <FriendSearch />
+              
+              {friendRequests.length > 0 && (
+                <div>
+                  <h3 className="font-semibold mb-3 text-sm">Friend Requests</h3>
+                  {friendRequests.map((request) => (
+                    <Card key={request.id} className="mb-3">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                              <User className="h-5 w-5 text-primary" />
+                            </div>
+                            <div>
+                              <div className="font-medium text-sm">
+                                {request.profiles?.display_name || 'Coffee Friend'}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {formatDate(request.created_at)}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => acceptFriendRequest(request.id)}
+                              className="h-8 px-3"
+                            >
+                              <Check className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => rejectFriendRequest(request.id)}
+                              className="h-8 px-3"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          onClick={() => acceptFriendRequest(request.id)}
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          <Check className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => rejectFriendRequest(request.id)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-
-              {friendRequests.length === 0 && (
-                <Card className="text-center p-8">
-                  <Clock className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">
-                    No pending friend requests.
-                  </p>
-                </Card>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               )}
+
+              <div>
+                <h3 className="font-semibold mb-3 text-sm">Your Coffee Friends ({friends.length})</h3>
+                
+                <div className="space-y-3">
+                  {friends.map((friendship) => {
+                    const friendId = friendship.user_id === user?.id ? friendship.friend_id : friendship.user_id;
+                    
+                    return (
+                      <Card 
+                        key={friendship.id} 
+                        className="cursor-pointer transition-all active:scale-95"
+                        onClick={() => navigate(`/profile/${friendId}`)}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                                <User className="h-5 w-5 text-primary" />
+                              </div>
+                              <div>
+                                <div className="font-medium text-sm">
+                                  {friendship.profiles?.display_name || 'Coffee Friend'}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  Friends since {formatDate(friendship.created_at)}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-muted-foreground">
+                              <Users className="h-4 w-4" />
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+
+                  {friends.length === 0 && (
+                    <div className="text-center py-8">
+                      <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="font-semibold mb-2">No friends yet</h3>
+                      <p className="text-muted-foreground text-sm">
+                        Search for coffee enthusiasts to connect with!
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        </TabsContent>
-      </Tabs>
+          </TabsContent>
+
+          {/* Guides Tab */}
+          <TabsContent value="guides">
+            <BrewGuidesSection userId={user?.id} />
+          </TabsContent>
+        </Tabs>
       </div>
+
+      {/* Create Post Dialog */}
+      <Dialog open={showCreatePost} onOpenChange={setShowCreatePost}>
+        <DialogContent className="max-w-sm mx-auto">
+          <DialogHeader>
+            <DialogTitle>Share Your Coffee Story</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="title">Title</Label>
+              <Input
+                id="title"
+                value={newPost.title}
+                onChange={(e) => setNewPost(prev => ({ ...prev, title: e.target.value }))}
+                placeholder="What's brewing?"
+              />
+            </div>
+            <div>
+              <Label htmlFor="content">Content</Label>
+              <Textarea
+                id="content"
+                value={newPost.content}
+                onChange={(e) => setNewPost(prev => ({ ...prev, content: e.target.value }))}
+                placeholder="Share your coffee experience..."
+                rows={4}
+              />
+            </div>
+            <Button 
+              onClick={handleCreatePost}
+              disabled={!newPost.title.trim() || !newPost.content.trim()}
+              className="w-full"
+            >
+              Share Post
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Profile Edit Dialog */}
+      <Dialog open={showProfileEdit} onOpenChange={setShowProfileEdit}>
+        <DialogContent className="max-w-sm mx-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Profile</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="displayName">Display Name</Label>
+              <Input
+                id="displayName"
+                value={editingProfile.display_name}
+                onChange={(e) => setEditingProfile(prev => ({ ...prev, display_name: e.target.value }))}
+                placeholder="Your display name"
+              />
+            </div>
+            <Button 
+              onClick={handleProfileUpdate}
+              disabled={!editingProfile.display_name.trim()}
+              className="w-full"
+            >
+              Update Profile
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
