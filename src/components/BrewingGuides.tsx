@@ -3,19 +3,86 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Coffee, Thermometer, Clock, Droplets, Target, ChevronRight, Beaker } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Coffee, Thermometer, Clock, Droplets, Target, ChevronRight, Beaker, Plus } from "lucide-react";
 import { brewingGuides, BrewingGuide } from "@/data/brewingGuides";
 
 export const BrewingGuides = () => {
   const [selectedGuide, setSelectedGuide] = useState<BrewingGuide>(brewingGuides[0]);
   const [filterMethod, setFilterMethod] = useState<string>('all');
   const [filterDifficulty, setFilterDifficulty] = useState<string>('all');
+  const [customGuides, setCustomGuides] = useState<BrewingGuide[]>([]);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [newGuide, setNewGuide] = useState<{
+    name: string;
+    method: string;
+    difficulty: 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert';
+    description: string;
+    ratio: string;
+    grindSize: string;
+    waterTemp: number;
+    brewTime: string;
+    targetFlavor: string[];
+    flavorProfile: string;
+    steps: { step: number; action: string; technique: string; time: string; scienceNote: string; }[];
+    tips: string[];
+    science: { extraction: string; agitation: string; temperature: string; grind: string; };
+  }>({
+    name: '',
+    method: '',
+    difficulty: 'Beginner',
+    description: '',
+    ratio: '1:16',
+    grindSize: 'Medium',
+    waterTemp: 200,
+    brewTime: '3:00',
+    targetFlavor: [],
+    flavorProfile: '',
+    steps: [{ step: 1, action: '', technique: '', time: '0:30', scienceNote: '' }],
+    tips: [''],
+    science: { extraction: '', agitation: '', temperature: '', grind: '' }
+  });
 
-  const filteredGuides = brewingGuides.filter(guide => {
+  const allGuides = [...brewingGuides, ...customGuides];
+  
+  const filteredGuides = allGuides.filter(guide => {
     const matchesMethod = filterMethod === 'all' || guide.method === filterMethod;
     const matchesDifficulty = filterDifficulty === 'all' || guide.difficulty === filterDifficulty;
     return matchesMethod && matchesDifficulty;
   });
+
+  const createCustomGuide = () => {
+    const customGuide: BrewingGuide = {
+      ...newGuide,
+      id: `custom-${Date.now()}`,
+      targetFlavor: newGuide.targetFlavor.filter(f => f.trim() !== ''),
+      tips: newGuide.tips.filter(t => t.trim() !== ''),
+    };
+    
+    setCustomGuides([...customGuides, customGuide]);
+    setSelectedGuide(customGuide);
+    setShowCreateDialog(false);
+    
+    // Reset form
+    setNewGuide({
+      name: '',
+      method: '',
+      difficulty: 'Beginner',
+      description: '',
+      ratio: '1:16',
+      grindSize: 'Medium',
+      waterTemp: 200,
+      brewTime: '3:00',
+      targetFlavor: [],
+      flavorProfile: '',
+      steps: [{ step: 1, action: '', technique: '', time: '0:30', scienceNote: '' }],
+      tips: [''],
+      science: { extraction: '', agitation: '', temperature: '', grind: '' }
+    });
+  };
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -27,7 +94,7 @@ export const BrewingGuides = () => {
     }
   };
 
-  const uniqueMethods = Array.from(new Set(brewingGuides.map(g => g.method)));
+  const uniqueMethods = Array.from(new Set(allGuides.map(g => g.method)));
   const difficulties = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
 
   return (
@@ -37,7 +104,7 @@ export const BrewingGuides = () => {
         <p className="text-muted-foreground text-lg">Advanced techniques targeting specific flavor profiles using brewing science</p>
       </div>
 
-      {/* Filters */}
+      {/* Filters and Create Button */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-center">
         <Select value={filterMethod} onValueChange={setFilterMethod}>
           <SelectTrigger className="w-48">
@@ -62,6 +129,111 @@ export const BrewingGuides = () => {
             ))}
           </SelectContent>
         </Select>
+
+        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+          <DialogTrigger asChild>
+            <Button variant="outline">
+              <Plus className="h-4 w-4 mr-2" />
+              Create Custom Guide
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Create Custom Brewing Guide</DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="name">Guide Name</Label>
+                  <Input
+                    id="name"
+                    value={newGuide.name}
+                    onChange={(e) => setNewGuide({...newGuide, name: e.target.value})}
+                    placeholder="My Custom Guide"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="method">Brewing Method</Label>
+                  <Input
+                    id="method"
+                    value={newGuide.method}
+                    onChange={(e) => setNewGuide({...newGuide, method: e.target.value})}
+                    placeholder="V60, AeroPress, etc."
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={newGuide.description}
+                    onChange={(e) => setNewGuide({...newGuide, description: e.target.value})}
+                    placeholder="Describe your brewing guide..."
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="difficulty">Difficulty Level</Label>
+                  <Select 
+                    value={newGuide.difficulty} 
+                    onValueChange={(value) => setNewGuide({...newGuide, difficulty: value as 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert'})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Beginner">Beginner</SelectItem>
+                      <SelectItem value="Intermediate">Intermediate</SelectItem>
+                      <SelectItem value="Advanced">Advanced</SelectItem>
+                      <SelectItem value="Expert">Expert</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="ratio">Coffee Ratio</Label>
+                  <Input
+                    id="ratio"
+                    value={newGuide.ratio}
+                    onChange={(e) => setNewGuide({...newGuide, ratio: e.target.value})}
+                    placeholder="1:16"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="waterTemp">Water Temperature (°C)</Label>
+                  <Input
+                    id="waterTemp"
+                    type="number"
+                    value={newGuide.waterTemp}
+                    onChange={(e) => setNewGuide({...newGuide, waterTemp: parseInt(e.target.value)})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="brewTime">Total Brew Time</Label>
+                  <Input
+                    id="brewTime"
+                    value={newGuide.brewTime}
+                    onChange={(e) => setNewGuide({...newGuide, brewTime: e.target.value})}
+                    placeholder="3:00"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-4 justify-end">
+                <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={createCustomGuide} disabled={!newGuide.name || !newGuide.method}>
+                  Create Guide
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

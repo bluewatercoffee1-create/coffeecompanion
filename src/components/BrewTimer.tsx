@@ -85,7 +85,7 @@ export const BrewTimer = () => {
 
   // Auto-advance steps based on time
   useEffect(() => {
-    if (selectedGuide && isRunning) {
+    if (selectedGuide && isRunning && time > 0) {
       const currentStepTime = selectedGuide.steps[currentStep];
       if (currentStepTime) {
         const [minutes, seconds] = currentStepTime.time.split(':').map(Number);

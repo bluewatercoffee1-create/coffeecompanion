@@ -52,11 +52,11 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				'coffee-bean': 'hsl(var(--coffee-bean))',
-				'coffee-cream': 'hsl(var(--coffee-cream))',
-				'coffee-golden': 'hsl(var(--coffee-golden))',
-				'coffee-roast': 'hsl(var(--coffee-roast))',
-				'coffee-steam': 'hsl(var(--coffee-steam))',
+				'coffee-dark': 'hsl(var(--coffee-dark))',
+				'coffee-light': 'hsl(var(--coffee-light))',
+				'coffee-copper': 'hsl(var(--coffee-copper))',
+				'coffee-slate': 'hsl(var(--coffee-slate))',
+				'coffee-mist': 'hsl(var(--coffee-mist))',
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',

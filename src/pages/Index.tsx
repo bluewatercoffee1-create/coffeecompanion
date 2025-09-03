@@ -29,7 +29,7 @@ const Index = () => {
       <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 flex items-center justify-center">
         <div className="flex items-center gap-2">
           <Coffee className="h-8 w-8 text-primary animate-pulse" />
-          <span className="text-lg font-semibold">Loading Coffee Compass...</span>
+          <span className="text-lg font-semibold">Loading Coffee Companion...</span>
         </div>
       </div>
     );
@@ -105,8 +105,8 @@ const Index = () => {
         </div>
         
         <div className="relative z-10 text-center text-white px-4">
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white to-coffee-golden bg-clip-text text-transparent">
-            Coffee Compass
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white to-coffee-copper bg-clip-text text-transparent">
+            Coffee Companion
           </h1>
           <p className="text-xl md:text-2xl mb-8 text-white/90 max-w-2xl mx-auto">
             The ultimate coffee enthusiast companion for perfect brewing, detailed tracking, and flavor mastery
@@ -128,7 +128,7 @@ const Index = () => {
             Master Your Coffee Journey
           </h2>
           <p className="text-center text-muted-foreground mb-16 text-lg max-w-2xl mx-auto">
-            From precision brewing to flavor profiling, Coffee Compass provides everything you need to elevate your coffee experience
+            From precision brewing to flavor profiling, Coffee Companion provides everything you need to elevate your coffee experience
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -165,7 +165,7 @@ const Index = () => {
               onClick={() => setActiveFeature('home')}
               className="text-2xl font-bold text-primary hover:bg-transparent"
             >
-              ☕ Coffee Compass
+              ☕ Coffee Companion
             </Button>
             
             <div className="flex items-center gap-4">
