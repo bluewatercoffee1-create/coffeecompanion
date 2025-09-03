@@ -181,10 +181,10 @@ const Index = () => {
             </Button>
             
             <div className="flex items-center gap-4">
-              {/* Mobile Menu */}
+              {/* Mobile & Tablet Menu */}
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="sm" className="md:hidden">
+                  <Button variant="ghost" size="sm" className="lg:hidden">
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
@@ -212,12 +212,30 @@ const Index = () => {
                         {feature.title}
                       </Button>
                     ))}
+                    <div className="border-t pt-4 mt-4">
+                      <Button
+                        variant="ghost"
+                        onClick={handleProfileClick}
+                        className="justify-start w-full"
+                      >
+                        <User className="h-4 w-4 mr-2" />
+                        Profile
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        onClick={() => signOut()}
+                        className="justify-start w-full"
+                      >
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Sign Out
+                      </Button>
+                    </div>
                   </div>
                 </SheetContent>
               </Sheet>
 
               {/* Desktop Menu */}
-              <div className="hidden md:flex space-x-2">
+              <div className="hidden lg:flex space-x-2">
                 {features.map((feature) => (
                   <Button
                     key={feature.id}
@@ -231,21 +249,21 @@ const Index = () => {
                 ))}
               </div>
               
-                <div className="flex items-center gap-3">
+                <div className="hidden lg:flex items-center gap-3">
                   <Button 
                     variant="ghost" 
                     size="sm"
                     onClick={() => navigate('/profile')}
                   >
                     <User className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">Profile</span>
+                    Profile
                   </Button>
-                  <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <span>Welcome back!</span>
                   </div>
                   <Button variant="outline" size="sm" onClick={() => signOut()}>
                     <LogOut className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">Sign Out</span>
+                    Sign Out
                   </Button>
                 </div>
             </div>
