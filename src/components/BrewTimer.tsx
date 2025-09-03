@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Play, Pause, RotateCcw, Clock, Droplets, Target, Scale, ChevronLeft, Coffee } from "lucide-react";
 import { getGuidesByMethod, getAllMethods, BrewingGuide } from "@/data/brewingGuides";
+import { useCommunityGuides } from "@/hooks/useCommunityGuides";
+import { useAuth } from "@/hooks/useAuth";
 
 export const BrewTimer = () => {
   const [time, setTime] = useState(0);
@@ -19,6 +21,9 @@ export const BrewTimer = () => {
   const [coffeeAmount, setCoffeeAmount] = useState(25);
   const [showMethodSelection, setShowMethodSelection] = useState(true);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const { user } = useAuth();
+  const { myGuides, likedGuides } = useCommunityGuides();
 
   const activeRatio = selectedGuide?.ratio || customRatio;
   const waterAmount = Math.round(coffeeAmount * parseFloat(activeRatio.split(':')[1]));
@@ -134,8 +139,55 @@ export const BrewTimer = () => {
     );
   }
 
+  // Helper function to format community guides for timer use
+  const formatCommunityGuideForTimer = (guide: any): BrewingGuide => {
+    return {
+      id: guide.id,
+      name: guide.name,
+      method: guide.method,
+      description: guide.description,
+      difficulty: guide.difficulty as any,
+      brewTime: guide.brew_time,
+      waterTemp: guide.water_temp,
+      grindSize: guide.grind_size,
+      ratio: guide.ratio,
+      targetFlavor: guide.flavor_profile || [],
+      flavorProfile: guide.target_flavor,
+      steps: guide.steps.map((step: any) => ({
+        step: step.step,
+        action: step.instruction,
+        time: step.duration || '0:30',
+        technique: step.instruction,
+        scienceNote: undefined
+      })),
+      science: guide.science ? {
+        extraction: guide.science,
+        agitation: '',
+        temperature: '',
+        grind: ''
+      } : {
+        extraction: '',
+        agitation: '',
+        temperature: '',
+        grind: ''
+      },
+      tips: guide.tips || []
+    };
+  };
+
   if (!selectedGuide) {
     const methodGuides = getGuidesByMethod(brewMethod);
+    
+    // Add user's custom guides and liked guides for this method
+    const userCustomGuides = user ? myGuides
+      .filter(guide => guide.method === brewMethod)
+      .map(formatCommunityGuideForTimer) : [];
+      
+    const userLikedGuides = user ? likedGuides
+      .filter(guide => guide.method === brewMethod)
+      .map(formatCommunityGuideForTimer) : [];
+    
+    const allGuidesForMethod = [...methodGuides, ...userCustomGuides, ...userLikedGuides];
     
     return (
       <div className="max-w-4xl mx-auto p-6 space-y-8">
@@ -151,7 +203,7 @@ export const BrewTimer = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {methodGuides.map((guide) => (
+          {allGuidesForMethod.map((guide) => (
             <Card 
               key={guide.id}
               className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
@@ -160,13 +212,25 @@ export const BrewTimer = () => {
               <CardContent className="p-6">
                 <div className="flex justify-between items-start mb-4">
                   <h3 className="text-xl font-semibold text-primary">{guide.name}</h3>
-                  <Badge variant={
-                    guide.difficulty === 'Beginner' ? 'default' :
-                    guide.difficulty === 'Intermediate' ? 'secondary' :
-                    guide.difficulty === 'Advanced' ? 'outline' : 'destructive'
-                  }>
-                    {guide.difficulty}
-                  </Badge>
+                  <div className="flex gap-2">
+                    <Badge variant={
+                      guide.difficulty === 'Beginner' ? 'default' :
+                      guide.difficulty === 'Intermediate' ? 'secondary' :
+                      guide.difficulty === 'Advanced' ? 'outline' : 'destructive'
+                    }>
+                      {guide.difficulty}
+                    </Badge>
+                    {userCustomGuides.some(g => g.id === guide.id) && (
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                        My Guide
+                      </Badge>
+                    )}
+                    {userLikedGuides.some(g => g.id === guide.id) && (
+                      <Badge variant="outline" className="bg-pink-50 text-pink-700 border-pink-200">
+                        Favorited
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 
                 <p className="text-muted-foreground mb-4">{guide.description}</p>
@@ -192,6 +256,15 @@ export const BrewTimer = () => {
               </CardContent>
             </Card>
           ))}
+          
+          {allGuidesForMethod.length === 0 && (
+            <Card className="col-span-full text-center p-8">
+              <Coffee className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">
+                No guides available for {brewMethod}. Create a custom guide to get started!
+              </p>
+            </Card>
+          )}
         </div>
       </div>
     );

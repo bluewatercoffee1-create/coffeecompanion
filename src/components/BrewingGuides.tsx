@@ -383,10 +383,24 @@ export const BrewingGuides = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-xl font-semibold text-primary">My Custom Guides</h3>
-                    <Button onClick={() => setShowCreateDialog(true)} size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create
-                    </Button>
+                    <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+                      <DialogTrigger asChild>
+                        <Button size="sm">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+                        <DialogHeader>
+                          <DialogTitle>Create Custom Brewing Guide</DialogTitle>
+                        </DialogHeader>
+                        
+                        <CustomGuideCreator 
+                          onGuideCreated={handleGuideCreated}
+                          onCancel={() => setShowCreateDialog(false)}
+                        />
+                      </DialogContent>
+                    </Dialog>
                   </div>
                   
                   {myGuides.length === 0 ? (
