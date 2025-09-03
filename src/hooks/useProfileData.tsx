@@ -140,7 +140,7 @@ export const useProfileData = () => {
       const { data, error } = await supabase
         .from('friendships')
         .select('*')
-        .eq('user_id', user.id)
+        .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`)
         .eq('status', 'accepted');
 
       if (error) throw error;
@@ -149,10 +149,13 @@ export const useProfileData = () => {
       const friendsWithProfiles: Friendship[] = data ? await Promise.all(
         data.map(async (friendship) => {
           try {
+            // Determine which user is the friend (not the current user)
+            const friendId = friendship.user_id === user.id ? friendship.friend_id : friendship.user_id;
+            
             const { data: profile } = await supabase
               .from('profiles')
               .select('display_name')
-              .eq('id', friendship.friend_id)
+              .eq('id', friendId)
               .maybeSingle();
               
             return {
