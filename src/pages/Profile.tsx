@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfileData } from '@/hooks/useProfileData';
+import { useProfile } from '@/hooks/useProfile';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,11 +11,12 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Heart, MessageCircle, Plus, UserPlus, Check, X, Clock } from 'lucide-react';
+import { User, Heart, MessageCircle, Plus, UserPlus, Check, X, Clock, ArrowLeft, Camera, Upload, Edit } from 'lucide-react';
 import { toast } from 'sonner';
 
 export const Profile = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const {
     posts,
     userPosts,
@@ -27,9 +30,55 @@ export const Profile = () => {
     rejectFriendRequest
   } = useProfileData();
 
+  const {
+    profile,
+    loading: profileLoading,
+    updateProfile,
+    updateAvatar,
+    updateBackground
+  } = useProfile();
+
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [newPost, setNewPost] = useState({ title: '', content: '', image_url: '' });
   const [activeTab, setActiveTab] = useState('feed');
+  const [showProfileEdit, setShowProfileEdit] = useState(false);
+  const [editingProfile, setEditingProfile] = useState({ display_name: '' });
+
+  const handleBackToApp = () => {
+    navigate('/');
+  };
+
+  const handleFileUpload = async (file: File, type: 'avatar' | 'background') => {
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      toast.error('File size must be less than 5MB');
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
+    }
+
+    if (type === 'avatar') {
+      await updateAvatar(file);
+    } else {
+      await updateBackground(file);
+    }
+  };
+
+  const handleProfileUpdate = async () => {
+    if (!editingProfile.display_name.trim()) {
+      toast.error('Display name cannot be empty');
+      return;
+    }
+
+    const result = await updateProfile({ display_name: editingProfile.display_name });
+    if (result) {
+      setShowProfileEdit(false);
+    }
+  };
 
   if (!user) {
     return (
@@ -63,7 +112,7 @@ export const Profile = () => {
     });
   };
 
-  if (loading) {
+  if (loading || profileLoading) {
     return (
       <div className="max-w-4xl mx-auto p-6 text-center">
         <div className="animate-pulse">Loading profile...</div>
@@ -72,11 +121,145 @@ export const Profile = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-8">
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold mb-4 text-primary">Coffee Community</h1>
-        <p className="text-muted-foreground text-lg">Connect with fellow coffee enthusiasts</p>
+    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20">
+      {/* Header with Back Button */}
+      <div className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="max-w-6xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <Button 
+              variant="ghost" 
+              onClick={handleBackToApp}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to App
+            </Button>
+            <h1 className="text-xl font-semibold">My Profile</h1>
+            <div></div>
+          </div>
+        </div>
       </div>
+
+      {/* Profile Background */}
+      <div 
+        className="relative h-64 bg-gradient-to-r from-primary/20 to-primary/40 bg-cover bg-center"
+        style={profile?.background_url ? { backgroundImage: `url(${profile.background_url})` } : {}}
+      >
+        <div className="absolute inset-0 bg-black/20" />
+        <div className="absolute bottom-4 right-4">
+          <input
+            type="file"
+            id="background-upload"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleFileUpload(file, 'background');
+            }}
+          />
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => document.getElementById('background-upload')?.click()}
+            className="bg-white/90 hover:bg-white"
+          >
+            <Camera className="h-4 w-4 mr-2" />
+            Change Background
+          </Button>
+        </div>
+      </div>
+
+      {/* Profile Avatar & Info */}
+      <div className="max-w-6xl mx-auto px-6 -mt-16 relative z-10">
+        <div className="flex flex-col md:flex-row items-start md:items-end gap-6 mb-8">
+          <div className="relative">
+            <div className="w-32 h-32 rounded-full border-4 border-white bg-white shadow-lg overflow-hidden">
+              {profile?.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center">
+                  <User className="h-12 w-12 text-primary" />
+                </div>
+              )}
+            </div>
+            <input
+              type="file"
+              id="avatar-upload"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleFileUpload(file, 'avatar');
+              }}
+            />
+            <Button
+              size="sm"
+              variant="secondary"
+              className="absolute -bottom-2 -right-2 rounded-full w-10 h-10 p-0"
+              onClick={() => document.getElementById('avatar-upload')?.click()}
+            >
+              <Camera className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="flex-1 text-white md:text-foreground">
+            <div className="flex items-center gap-3 mb-2">
+              <h2 className="text-2xl font-bold">
+                {profile?.display_name || 'Coffee Enthusiast'}
+              </h2>
+              <Dialog open={showProfileEdit} onOpenChange={setShowProfileEdit}>
+                <DialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setEditingProfile({ display_name: profile?.display_name || '' })}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Edit Profile</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="display-name">Display Name</Label>
+                      <Input
+                        id="display-name"
+                        value={editingProfile.display_name}
+                        onChange={(e) => setEditingProfile(prev => ({ ...prev, display_name: e.target.value }))}
+                        placeholder="Enter your display name"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={handleProfileUpdate}>Save Changes</Button>
+                      <Button variant="outline" onClick={() => setShowProfileEdit(false)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+            <div className="flex items-center gap-6 text-sm">
+              <span>{friends.length} Friends</span>
+              <span>{userPosts.length} Posts</span>
+              <span>Member since {new Date(profile?.created_at || '').getFullYear()}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto p-6 space-y-8">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold mb-4 text-primary">Coffee Community</h1>
+          <p className="text-muted-foreground text-lg">Connect with fellow coffee enthusiasts</p>
+        </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full max-w-lg mx-auto grid-cols-4 mb-8">
@@ -350,6 +533,7 @@ export const Profile = () => {
           </div>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 };
