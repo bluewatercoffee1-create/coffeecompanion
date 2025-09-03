@@ -6,7 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Play, Pause, RotateCcw, Clock, Droplets, Target, Scale, ChevronLeft, Coffee } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Play, Pause, RotateCcw, Clock, Droplets, Target, Scale, ChevronLeft, Coffee, Heart, User, BookOpen } from "lucide-react";
 import { getGuidesByMethod, getAllMethods, BrewingGuide } from "@/data/brewingGuides";
 import { useCommunityGuides } from "@/hooks/useCommunityGuides";
 import { useAuth } from "@/hooks/useAuth";
@@ -187,7 +188,74 @@ export const BrewTimer = () => {
       .filter(guide => guide.method === brewMethod)
       .map(formatCommunityGuideForTimer) : [];
     
-    const allGuidesForMethod = [...methodGuides, ...userCustomGuides, ...userLikedGuides];
+    const renderGuideCards = (guides: BrewingGuide[], type: 'builtin' | 'created' | 'favorited') => (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {guides.map((guide) => (
+          <Card 
+            key={guide.id}
+            className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
+            onClick={() => selectGuide(guide)}
+          >
+            <CardContent className="p-6">
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-xl font-semibold text-primary">{guide.name}</h3>
+                <div className="flex gap-2">
+                  <Badge variant={
+                    guide.difficulty === 'Beginner' ? 'default' :
+                    guide.difficulty === 'Intermediate' ? 'secondary' :
+                    guide.difficulty === 'Advanced' ? 'outline' : 'destructive'
+                  }>
+                    {guide.difficulty}
+                  </Badge>
+                  {type === 'created' && (
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                      My Guide
+                    </Badge>
+                  )}
+                  {type === 'favorited' && (
+                    <Badge variant="outline" className="bg-pink-50 text-pink-700 border-pink-200">
+                      Favorited
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              
+              <p className="text-muted-foreground mb-4">{guide.description}</p>
+              
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-primary" />
+                  <span>{guide.brewTime}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Target className="h-4 w-4 text-primary" />
+                  <span>{guide.ratio}</span>
+                </div>
+              </div>
+              
+              <div className="flex flex-wrap gap-1 mt-4">
+                {guide.targetFlavor.slice(0, 3).map(flavor => (
+                  <Badge key={flavor} variant="secondary" className="text-xs">
+                    {flavor}
+                  </Badge>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+        
+        {guides.length === 0 && (
+          <Card className="col-span-full text-center p-8">
+            <Coffee className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">
+              {type === 'builtin' && `No built-in guides available for ${brewMethod}.`}
+              {type === 'created' && `You haven't created any ${brewMethod} guides yet.`}
+              {type === 'favorited' && `You haven't favorited any ${brewMethod} guides yet.`}
+            </p>
+          </Card>
+        )}
+      </div>
+    );
     
     return (
       <div className="max-w-4xl mx-auto p-6 space-y-8">
@@ -202,70 +270,70 @@ export const BrewTimer = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {allGuidesForMethod.map((guide) => (
-            <Card 
-              key={guide.id}
-              className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
-              onClick={() => selectGuide(guide)}
-            >
-              <CardContent className="p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-xl font-semibold text-primary">{guide.name}</h3>
-                  <div className="flex gap-2">
-                    <Badge variant={
-                      guide.difficulty === 'Beginner' ? 'default' :
-                      guide.difficulty === 'Intermediate' ? 'secondary' :
-                      guide.difficulty === 'Advanced' ? 'outline' : 'destructive'
-                    }>
-                      {guide.difficulty}
-                    </Badge>
-                    {userCustomGuides.some(g => g.id === guide.id) && (
-                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                        My Guide
-                      </Badge>
-                    )}
-                    {userLikedGuides.some(g => g.id === guide.id) && (
-                      <Badge variant="outline" className="bg-pink-50 text-pink-700 border-pink-200">
-                        Favorited
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-                
-                <p className="text-muted-foreground mb-4">{guide.description}</p>
-                
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-primary" />
-                    <span>{guide.brewTime}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Target className="h-4 w-4 text-primary" />
-                    <span>{guide.ratio}</span>
-                  </div>
-                </div>
-                
-                <div className="flex flex-wrap gap-1 mt-4">
-                  {guide.targetFlavor.slice(0, 3).map(flavor => (
-                    <Badge key={flavor} variant="secondary" className="text-xs">
-                      {flavor}
-                    </Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-          
-          {allGuidesForMethod.length === 0 && (
-            <Card className="col-span-full text-center p-8">
-              <Coffee className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">
-                No guides available for {brewMethod}. Create a custom guide to get started!
-              </p>
-            </Card>
-          )}
-        </div>
+        <Tabs defaultValue="builtin" className="w-full">
+          <TabsList className="grid w-full max-w-lg mx-auto grid-cols-3 mb-8">
+            <TabsTrigger value="builtin" className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              Built-in Brews
+            </TabsTrigger>
+            <TabsTrigger value="created" className="flex items-center gap-2" disabled={!user}>
+              <User className="h-4 w-4" />
+              Created Brews
+            </TabsTrigger>
+            <TabsTrigger value="favorited" className="flex items-center gap-2" disabled={!user}>
+              <Heart className="h-4 w-4" />
+              Favorited Brews
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="builtin">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-primary">Built-in {brewMethod} Guides</h2>
+                <Badge variant="secondary">{methodGuides.length} guides</Badge>
+              </div>
+              {renderGuideCards(methodGuides, 'builtin')}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="created">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-primary">Your Created {brewMethod} Guides</h2>
+                <Badge variant="secondary">{userCustomGuides.length} guides</Badge>
+              </div>
+              {user ? (
+                renderGuideCards(userCustomGuides, 'created')
+              ) : (
+                <Card className="text-center p-8">
+                  <User className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground mb-4">
+                    Sign in to view your created brewing guides.
+                  </p>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="favorited">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-primary">Your Favorited {brewMethod} Guides</h2>
+                <Badge variant="secondary">{userLikedGuides.length} guides</Badge>
+              </div>
+              {user ? (
+                renderGuideCards(userLikedGuides, 'favorited')
+              ) : (
+                <Card className="text-center p-8">
+                  <Heart className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground mb-4">
+                    Sign in to view your favorited brewing guides.
+                  </p>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     );
   }
