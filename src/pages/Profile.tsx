@@ -487,23 +487,28 @@ export const Profile = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {friends.map((friendship) => (
-                <Card 
-                  key={friendship.id} 
-                  className="coffee-card cursor-pointer hover:scale-105 transition-transform"
-                  onClick={() => navigate(`/profile/${friendship.friend_id}`)}
-                >
-                  <CardContent className="p-4 text-center">
-                    <User className="h-12 w-12 text-primary mx-auto mb-3" />
-                    <h3 className="font-semibold mb-2">
-                      {friendship.profiles?.display_name || 'Coffee Friend'}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      Friends since {formatDate(friendship.created_at)}
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
+              {friends.map((friendship) => {
+                // Determine which user is the friend (not the current user)
+                const friendId = friendship.user_id === user.id ? friendship.friend_id : friendship.user_id;
+                
+                return (
+                  <Card 
+                    key={friendship.id} 
+                    className="coffee-card cursor-pointer hover:scale-105 transition-transform"
+                    onClick={() => navigate(`/profile/${friendId}`)}
+                  >
+                    <CardContent className="p-4 text-center">
+                      <User className="h-12 w-12 text-primary mx-auto mb-3" />
+                      <h3 className="font-semibold mb-2">
+                        {friendship.profiles?.display_name || 'Coffee Friend'}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Friends since {formatDate(friendship.created_at)}
+                      </p>
+                    </CardContent>
+                  </Card>
+                );
+              })}
 
               {friends.length === 0 && (
                 <Card className="col-span-full text-center p-8">
