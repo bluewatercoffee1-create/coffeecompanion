@@ -14,7 +14,7 @@ export interface UserPost {
   created_at: string;
   updated_at: string;
   profiles?: {
-    display_name: string;
+    display_name?: string;
   } | null;
 }
 
@@ -26,7 +26,7 @@ export interface Friendship {
   created_at: string;
   updated_at: string;
   profiles?: {
-    display_name: string;
+    display_name?: string;
   } | null;
 }
 
@@ -59,19 +59,27 @@ export const useProfileData = () => {
 
       if (error) throw error;
       
-      // Fetch profile data separately for now
-      const postsWithProfiles = data ? await Promise.all(
+      // Fetch profile data separately and handle potential errors
+      const postsWithProfiles: UserPost[] = data ? await Promise.all(
         data.map(async (post) => {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('display_name')
-            .eq('id', post.user_id)
-            .maybeSingle();
-            
-          return {
-            ...post,
-            profiles: profile
-          };
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('display_name')
+              .eq('id', post.user_id)
+              .maybeSingle();
+              
+            return {
+              ...post,
+              profiles: profile || null
+            } as UserPost;
+          } catch (profileError) {
+            console.error('Error fetching profile for post:', profileError);
+            return {
+              ...post,
+              profiles: null
+            } as UserPost;
+          }
         })
       ) : [];
       
@@ -94,19 +102,27 @@ export const useProfileData = () => {
 
       if (error) throw error;
       
-      // Fetch profile data separately for now
-      const postsWithProfiles = data ? await Promise.all(
+      // Fetch profile data separately and handle potential errors
+      const postsWithProfiles: UserPost[] = data ? await Promise.all(
         data.map(async (post) => {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('display_name')
-            .eq('id', post.user_id)
-            .maybeSingle();
-            
-          return {
-            ...post,
-            profiles: profile
-          };
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('display_name')
+              .eq('id', post.user_id)
+              .maybeSingle();
+              
+            return {
+              ...post,
+              profiles: profile || null
+            } as UserPost;
+          } catch (profileError) {
+            console.error('Error fetching profile for post:', profileError);
+            return {
+              ...post,
+              profiles: null
+            } as UserPost;
+          }
         })
       ) : [];
       
@@ -129,20 +145,29 @@ export const useProfileData = () => {
 
       if (error) throw error;
       
-      // Fetch profile data separately for now
-      const friendsWithProfiles = data ? await Promise.all(
+      // Fetch profile data separately and handle potential errors
+      const friendsWithProfiles: Friendship[] = data ? await Promise.all(
         data.map(async (friendship) => {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('display_name')
-            .eq('id', friendship.friend_id)
-            .maybeSingle();
-            
-          return {
-            ...friendship,
-            status: friendship.status as 'pending' | 'accepted' | 'rejected',
-            profiles: profile
-          };
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('display_name')
+              .eq('id', friendship.friend_id)
+              .maybeSingle();
+              
+            return {
+              ...friendship,
+              status: friendship.status as 'pending' | 'accepted' | 'rejected',
+              profiles: profile || null
+            } as Friendship;
+          } catch (profileError) {
+            console.error('Error fetching profile for friendship:', profileError);
+            return {
+              ...friendship,
+              status: friendship.status as 'pending' | 'accepted' | 'rejected',
+              profiles: null
+            } as Friendship;
+          }
         })
       ) : [];
       
@@ -164,20 +189,29 @@ export const useProfileData = () => {
 
       if (error) throw error;
       
-      // Fetch profile data separately for now
-      const requestsWithProfiles = data ? await Promise.all(
+      // Fetch profile data separately and handle potential errors
+      const requestsWithProfiles: Friendship[] = data ? await Promise.all(
         data.map(async (friendship) => {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('display_name')
-            .eq('id', friendship.user_id)
-            .maybeSingle();
-            
-          return {
-            ...friendship,
-            status: friendship.status as 'pending' | 'accepted' | 'rejected',
-            profiles: profile
-          };
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('display_name')
+              .eq('id', friendship.user_id)
+              .maybeSingle();
+              
+            return {
+              ...friendship,
+              status: friendship.status as 'pending' | 'accepted' | 'rejected',
+              profiles: profile || null
+            } as Friendship;
+          } catch (profileError) {
+            console.error('Error fetching profile for friend request:', profileError);
+            return {
+              ...friendship,
+              status: friendship.status as 'pending' | 'accepted' | 'rejected',
+              profiles: null
+            } as Friendship;
+          }
         })
       ) : [];
       
