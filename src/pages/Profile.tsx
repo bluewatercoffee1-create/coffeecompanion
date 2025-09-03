@@ -455,10 +455,6 @@ export const Profile = () => {
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold text-primary">My Brew Guides</h2>
-              <Button onClick={() => navigate('/guides')}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Guide
-              </Button>
             </div>
 
             <BrewGuidesSection userId={user.id} />
@@ -487,7 +483,11 @@ export const Profile = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {friends.map((friendship) => (
-                <Card key={friendship.id} className="coffee-card">
+                <Card 
+                  key={friendship.id} 
+                  className="coffee-card cursor-pointer hover:scale-105 transition-transform"
+                  onClick={() => navigate(`/profile/${friendship.friend_id}`)}
+                >
                   <CardContent className="p-4 text-center">
                     <User className="h-12 w-12 text-primary mx-auto mb-3" />
                     <h3 className="font-semibold mb-2">

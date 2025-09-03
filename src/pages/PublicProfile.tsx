@@ -88,20 +88,23 @@ export const PublicProfile = () => {
     if (!user || !userId || user.id === userId) return;
 
     try {
+      // Check both directions of the friendship
       const { data, error } = await supabase
         .from('friendships')
         .select('*')
         .or(`and(user_id.eq.${user.id},friend_id.eq.${userId}),and(user_id.eq.${userId},friend_id.eq.${user.id})`)
-        .maybeSingle();
+        .order('created_at', { ascending: false })
+        .limit(1);
 
       if (error && error.code !== 'PGRST116') throw error;
 
-      if (data) {
-        if (data.status === 'accepted') {
+      if (data && data.length > 0) {
+        const friendship = data[0];
+        if (friendship.status === 'accepted') {
           setFriendshipStatus('friends');
-        } else if (data.user_id === user.id) {
+        } else if (friendship.user_id === user.id) {
           setFriendshipStatus('sent');
-        } else {
+        } else if (friendship.friend_id === user.id) {
           setFriendshipStatus('pending');
         }
       } else {

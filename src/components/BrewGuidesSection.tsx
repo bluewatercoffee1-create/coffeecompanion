@@ -122,10 +122,9 @@ export const BrewGuidesSection = ({ userId }: BrewGuidesSectionProps) => {
         <p className="text-muted-foreground mb-4">
           You haven't created any brew guides yet.
         </p>
-        <Button onClick={() => window.location.href = '/guides'}>
-          <Plus className="h-4 w-4 mr-2" />
-          Create Your First Guide
-        </Button>
+        <p className="text-sm text-muted-foreground">
+          Create guides from the main app's Brewing Guides section.
+        </p>
       </Card>
     );
   }
