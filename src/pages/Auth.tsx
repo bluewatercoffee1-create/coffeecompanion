@@ -83,7 +83,7 @@ export default function Auth() {
           <div className="flex items-center justify-center gap-2">
             <Coffee className="h-8 w-8 text-primary" />
             <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Coffee Compass
+              Coffee Companion
             </h1>
           </div>
           <CardDescription>
