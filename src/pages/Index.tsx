@@ -108,27 +108,28 @@ const Index = () => {
   const renderHome = () => (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        <div 
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${heroImage})` }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-coffee-orange/40 via-coffee-peach/30 to-coffee-sunshine/40"></div>
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-coffee-sunshine via-coffee-peach to-coffee-coral">
+        {/* Decorative background elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-20 left-20 w-64 h-64 bg-coffee-orange/20 rounded-full blur-3xl animate-float"></div>
+          <div className="absolute bottom-32 right-24 w-48 h-48 bg-coffee-mint/30 rounded-full blur-2xl animate-float" style={{ animationDelay: '1s' }}></div>
+          <div className="absolute top-1/3 right-1/4 w-32 h-32 bg-coffee-sky/25 rounded-full blur-xl animate-float" style={{ animationDelay: '2s' }}></div>
+          <div className="absolute bottom-1/4 left-1/3 w-40 h-40 bg-coffee-gold/20 rounded-full blur-2xl animate-float" style={{ animationDelay: '0.5s' }}></div>
         </div>
         
         <div className="relative z-10 text-center text-white px-4 max-w-4xl mx-auto">
           <div className="animate-bounce-in">
-            <h1 className="text-6xl md:text-8xl font-bold mb-6 hero-text drop-shadow-lg">
+            <h1 className="text-6xl md:text-8xl font-bold mb-6 text-white drop-shadow-2xl">
               Your Coffee Companion
             </h1>
             <div className="flex items-center justify-center gap-4 mb-8">
-              <div className="w-2 h-2 bg-coffee-sunshine rounded-full animate-pulse-glow"></div>
-              <p className="text-2xl md:text-3xl mb-0 text-white/95 font-medium drop-shadow-md">
+              <div className="w-2 h-2 bg-white/80 rounded-full animate-pulse-glow"></div>
+              <p className="text-2xl md:text-3xl mb-0 text-white/95 font-medium drop-shadow-lg">
                 Let's brew something amazing together! ☕✨
               </p>
-              <div className="w-2 h-2 bg-coffee-coral rounded-full animate-pulse-glow"></div>
+              <div className="w-2 h-2 bg-white/80 rounded-full animate-pulse-glow"></div>
             </div>
-            <p className="text-lg md:text-xl mb-12 text-white/90 max-w-2xl mx-auto leading-relaxed drop-shadow-sm">
+            <p className="text-lg md:text-xl mb-12 text-white/90 max-w-2xl mx-auto leading-relaxed drop-shadow-md">
               Your friendly companion for perfect brewing, detailed tracking, and flavor discovery. 
               Ready to explore the wonderful world of coffee with you! 🌟
             </p>
@@ -136,7 +137,7 @@ const Index = () => {
               <Button 
                 onClick={() => setActiveFeature('timer')}
                 size="lg" 
-                className="sunrise-gradient text-white font-bold px-10 py-6 rounded-full bright-shadow hover:scale-110 bounce-transition text-lg"
+                className="bg-white text-coffee-warm font-bold px-10 py-6 rounded-full bright-shadow hover:scale-110 bounce-transition text-lg"
               >
                 Start Brewing Together <ChevronRight className="ml-3 h-6 w-6" />
               </Button>
@@ -152,15 +153,15 @@ const Index = () => {
           </div>
         </div>
         
-        {/* Floating Elements */}
+        {/* Additional floating elements */}
         <div className="absolute top-20 left-10 animate-float">
-          <div className="w-16 h-16 bg-coffee-sunshine/20 rounded-full blur-xl"></div>
+          <div className="w-16 h-16 bg-white/10 rounded-full blur-xl"></div>
         </div>
-        <div className="absolute bottom-32 right-16 animate-float" style={{ animationDelay: '1s' }}>
-          <div className="w-12 h-12 bg-coffee-coral/20 rounded-full blur-lg"></div>
+        <div className="absolute bottom-32 right-16 animate-float" style={{ animationDelay: '1.5s' }}>
+          <div className="w-12 h-12 bg-white/15 rounded-full blur-lg"></div>
         </div>
-        <div className="absolute top-1/3 right-20 animate-float" style={{ animationDelay: '2s' }}>
-          <div className="w-8 h-8 bg-coffee-mint/20 rounded-full blur-md"></div>
+        <div className="absolute top-1/2 left-16 animate-float" style={{ animationDelay: '2.5s' }}>
+          <div className="w-8 h-8 bg-white/20 rounded-full blur-md"></div>
         </div>
       </section>
 
