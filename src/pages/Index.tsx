@@ -108,58 +108,157 @@ const Index = () => {
   const renderHome = () => (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${heroImage})` }}
         >
-          <div className="absolute inset-0 bg-black/40"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-coffee-orange/40 via-coffee-peach/30 to-coffee-sunshine/40"></div>
         </div>
         
-        <div className="relative z-10 text-center text-white px-4">
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white to-coffee-copper bg-clip-text text-transparent">
-            Coffee Companion
-          </h1>
-          <p className="text-xl md:text-2xl mb-8 text-white/90 max-w-2xl mx-auto">
-            The ultimate coffee enthusiast companion for perfect brewing, detailed tracking, and flavor mastery
+        <div className="relative z-10 text-center text-white px-4 max-w-4xl mx-auto">
+          <div className="animate-bounce-in">
+            <h1 className="text-6xl md:text-8xl font-bold mb-6 hero-text drop-shadow-lg">
+              Your Coffee Companion
+            </h1>
+            <div className="flex items-center justify-center gap-4 mb-8">
+              <div className="w-2 h-2 bg-coffee-sunshine rounded-full animate-pulse-glow"></div>
+              <p className="text-2xl md:text-3xl mb-0 text-white/95 font-medium drop-shadow-md">
+                Let's brew something amazing together! ☕✨
+              </p>
+              <div className="w-2 h-2 bg-coffee-coral rounded-full animate-pulse-glow"></div>
+            </div>
+            <p className="text-lg md:text-xl mb-12 text-white/90 max-w-2xl mx-auto leading-relaxed drop-shadow-sm">
+              Your friendly companion for perfect brewing, detailed tracking, and flavor discovery. 
+              Ready to explore the wonderful world of coffee with you! 🌟
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Button 
+                onClick={() => setActiveFeature('timer')}
+                size="lg" 
+                className="sunrise-gradient text-white font-bold px-10 py-6 rounded-full bright-shadow hover:scale-110 bounce-transition text-lg"
+              >
+                Start Brewing Together <ChevronRight className="ml-3 h-6 w-6" />
+              </Button>
+              <Button 
+                onClick={() => setActiveFeature('journal')}
+                size="lg" 
+                variant="outline"
+                className="bg-white/20 border-white/30 text-white font-semibold px-8 py-6 rounded-full backdrop-blur-sm hover:bg-white/30 bounce-transition text-lg"
+              >
+                Explore Features 🚀
+              </Button>
+            </div>
+          </div>
+        </div>
+        
+        {/* Floating Elements */}
+        <div className="absolute top-20 left-10 animate-float">
+          <div className="w-16 h-16 bg-coffee-sunshine/20 rounded-full blur-xl"></div>
+        </div>
+        <div className="absolute bottom-32 right-16 animate-float" style={{ animationDelay: '1s' }}>
+          <div className="w-12 h-12 bg-coffee-coral/20 rounded-full blur-lg"></div>
+        </div>
+        <div className="absolute top-1/3 right-20 animate-float" style={{ animationDelay: '2s' }}>
+          <div className="w-8 h-8 bg-coffee-mint/20 rounded-full blur-md"></div>
+        </div>
+      </section>
+
+      {/* Welcome Message */}
+      <section className="py-16 px-4 bg-gradient-to-br from-coffee-light to-coffee-cream">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="companion-text mb-6">
+            Hey there, coffee lover! 👋
+          </h2>
+          <p className="text-xl text-muted-foreground leading-relaxed mb-8">
+            I'm here to be your brewing buddy, taste-testing partner, and coffee journey companion. 
+            Together, we'll discover new flavors, perfect your technique, and make every cup special! 
           </p>
-          <Button 
-            onClick={() => setActiveFeature('timer')}
-            size="lg" 
-            className="coffee-gradient text-white font-semibold px-8 py-4 rounded-full coffee-shadow hover:scale-105 smooth-transition"
-          >
-            Start Brewing <ChevronRight className="ml-2 h-5 w-5" />
-          </Button>
+          <div className="flex justify-center gap-8 flex-wrap">
+            <div className="flex items-center gap-3 text-lg font-medium text-primary">
+              <div className="w-3 h-3 bg-coffee-orange rounded-full"></div>
+              Always here to help
+            </div>
+            <div className="flex items-center gap-3 text-lg font-medium text-primary">
+              <div className="w-3 h-3 bg-coffee-coral rounded-full"></div>
+              Learn together
+            </div>
+            <div className="flex items-center gap-3 text-lg font-medium text-primary">
+              <div className="w-3 h-3 bg-coffee-sunshine rounded-full"></div>
+              Celebrate great brews
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Features Grid */}
-      <section className="py-20 px-4 cream-gradient">
+      <section className="py-20 px-4 bg-gradient-to-br from-background via-coffee-light/50 to-coffee-cream/80">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-4 text-primary">
-            Master Your Coffee Journey
-          </h2>
-          <p className="text-center text-muted-foreground mb-16 text-lg max-w-2xl mx-auto">
-            From precision brewing to flavor profiling, Coffee Companion provides everything you need to elevate your coffee experience
-          </p>
+          <div className="text-center mb-16">
+            <h2 className="text-5xl font-bold mb-6">
+              <span className="companion-text">Let's Explore Together!</span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+              Every feature is designed to make your coffee journey more enjoyable and successful. 
+              Think of me as your personal coffee coach and cheerleader! 🎉
+            </p>
+          </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((feature) => (
+            {features.map((feature, index) => (
               <Card 
                 key={feature.id}
-                className="coffee-card p-8 cursor-pointer group hover:scale-105 smooth-transition"
+                className="companion-card cursor-pointer group hover:scale-110 bounce-transition"
                 onClick={() => setActiveFeature(feature.id)}
+                style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <div className="golden-gradient p-4 rounded-full w-16 h-16 flex items-center justify-center mb-6 group-hover:scale-110 smooth-transition">
-                  <feature.icon className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="text-2xl font-bold mb-3 text-primary">{feature.title}</h3>
-                <p className="text-muted-foreground mb-4">{feature.description}</p>
-                <div className="flex items-center text-primary font-medium">
-                  Explore <ChevronRight className="ml-2 h-4 w-4 group-hover:translate-x-1 smooth-transition" />
+                <div className="p-8 text-center">
+                  <div className="feature-icon mx-auto mb-6 group-hover:scale-110 bounce-transition">
+                    <feature.icon className="h-8 w-8" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-4 text-primary group-hover:text-coffee-orange bounce-transition">
+                    {feature.title}
+                  </h3>
+                  <p className="text-muted-foreground mb-6 leading-relaxed">
+                    {feature.description}
+                  </p>
+                  <div className="flex items-center justify-center text-primary font-semibold group-hover:text-coffee-orange">
+                    <span>Let's try it!</span>
+                    <ChevronRight className="ml-2 h-5 w-5 group-hover:translate-x-2 bounce-transition" />
+                  </div>
                 </div>
               </Card>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Call to Action */}
+      <section className="py-20 px-4 companion-gradient">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 drop-shadow-lg">
+            Ready for Your Coffee Adventure? ☕🌟
+          </h2>
+          <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto leading-relaxed drop-shadow-sm">
+            I can't wait to help you discover new flavors, master brewing techniques, 
+            and create memories one cup at a time. Let's get started!
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button 
+              onClick={() => setActiveFeature('timer')}
+              size="lg" 
+              className="bg-white text-coffee-warm font-bold px-10 py-6 rounded-full warm-shadow hover:scale-110 bounce-transition text-lg"
+            >
+              Start Brewing Now! 🚀
+            </Button>
+            <Button 
+              onClick={() => setActiveFeature('community')}
+              size="lg" 
+              variant="outline"
+              className="border-white/50 text-white font-semibold px-8 py-6 rounded-full backdrop-blur-sm hover:bg-white/20 bounce-transition text-lg"
+            >
+              Join Our Community 👥
+            </Button>
           </div>
         </div>
       </section>

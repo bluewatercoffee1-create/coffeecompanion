@@ -2,132 +2,143 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Coffee Companion Design System - Modern & Intriguing palette */
+/* Coffee Companion Design System - Bright & Friendly Companion Vibe */
 
 @layer base {
   :root {
-    /* Modern coffee-inspired color palette */
-    --background: 210 20% 98%;
-    --foreground: 220 15% 15%;
+    /* Bright, friendly companion-inspired color palette */
+    --background: 35 100% 98%;
+    --foreground: 345 15% 20%;
 
-    --card: 210 15% 99%;
-    --card-foreground: 220 15% 15%;
+    --card: 35 50% 97%;
+    --card-foreground: 345 15% 20%;
 
-    --popover: 210 15% 99%;
-    --popover-foreground: 220 15% 15%;
+    --popover: 35 50% 97%;
+    --popover-foreground: 345 15% 20%;
 
-    /* Deep charcoal primary */
-    --primary: 220 25% 25%;
-    --primary-foreground: 210 20% 98%;
+    /* Warm coffee brown as primary */
+    --primary: 25 75% 45%;
+    --primary-foreground: 35 100% 98%;
 
-    /* Modern neutral secondary */
-    --secondary: 210 12% 94%;
-    --secondary-foreground: 220 15% 15%;
+    /* Soft cream secondary */
+    --secondary: 45 60% 92%;
+    --secondary-foreground: 345 15% 20%;
 
-    /* Sophisticated muted tones */    
-    --muted: 210 10% 92%;
-    --muted-foreground: 220 10% 50%;
+    /* Light peachy muted tones */    
+    --muted: 35 40% 95%;
+    --muted-foreground: 25 15% 55%;
 
-    /* Vibrant copper accent */
-    --accent: 25 85% 65%;
-    --accent-foreground: 220 15% 15%;
+    /* Vibrant orange accent */
+    --accent: 20 100% 65%;
+    --accent-foreground: 345 15% 20%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 35 25% 96%;
 
-    --border: 30 20% 85%;
-    --input: 30 20% 85%;
-    --ring: 25 45% 12%;
+    --border: 35 30% 88%;
+    --input: 35 30% 88%;
+    --ring: 25 75% 45%;
 
-    /* Modern coffee design tokens */
-    --coffee-dark: 220 25% 25%;
-    --coffee-light: 210 15% 95%;
-    --coffee-copper: 25 85% 65%;
-    --coffee-slate: 215 15% 35%;
-    --coffee-mist: 210 20% 96%;
+    /* Bright companion design tokens */
+    --coffee-warm: 25 75% 45%;
+    --coffee-light: 45 80% 95%;
+    --coffee-orange: 20 100% 65%;
+    --coffee-cream: 45 60% 90%;
+    --coffee-gold: 45 95% 70%;
+    --coffee-peach: 15 85% 80%;
+    --coffee-coral: 10 90% 70%;
+    --coffee-sunshine: 50 100% 75%;
+    --coffee-sky: 200 80% 85%;
+    --coffee-mint: 150 60% 85%;
     
-    /* Contemporary gradients */
-    --gradient-coffee: linear-gradient(135deg, hsl(var(--coffee-dark)), hsl(var(--coffee-slate)));
-    --gradient-light: linear-gradient(180deg, hsl(var(--coffee-light)), hsl(var(--background)));
-    --gradient-copper: linear-gradient(45deg, hsl(var(--coffee-copper)), hsl(var(--accent)));
+    /* Bright, cheerful gradients */
+    --gradient-sunrise: linear-gradient(135deg, hsl(var(--coffee-orange)), hsl(var(--coffee-gold)));
+    --gradient-warm: linear-gradient(135deg, hsl(var(--coffee-warm)), hsl(var(--coffee-orange)));
+    --gradient-peachy: linear-gradient(180deg, hsl(var(--coffee-peach)), hsl(var(--coffee-cream)));
+    --gradient-sky: linear-gradient(135deg, hsl(var(--coffee-sky)), hsl(var(--coffee-mint)));
+    --gradient-companion: linear-gradient(45deg, hsl(var(--coffee-coral)), hsl(var(--coffee-sunshine)));
     
-    /* Modern shadows */
-    --shadow-coffee: 0 10px 30px -10px hsl(var(--coffee-dark) / 0.15);
-    --shadow-warm: 0 4px 20px -4px hsl(var(--coffee-copper) / 0.25);
+    /* Warm, welcoming shadows */
+    --shadow-warm: 0 10px 30px -10px hsl(var(--coffee-orange) / 0.3);
+    --shadow-cozy: 0 4px 20px -4px hsl(var(--coffee-warm) / 0.25);
+    --shadow-bright: 0 8px 25px -8px hsl(var(--coffee-sunshine) / 0.4);
     
-    /* Smooth transitions */
+    /* Smooth, friendly transitions */
+    --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 35 50% 97%;
+    --sidebar-foreground: 345 15% 20%;
+    --sidebar-primary: 25 75% 45%;
+    --sidebar-primary-foreground: 35 100% 98%;
+    --sidebar-accent: 45 60% 92%;
+    --sidebar-accent-foreground: 345 15% 20%;
+    --sidebar-border: 35 30% 88%;
+    --sidebar-ring: 25 75% 45%;
   }
 
   .dark {
-    /* Modern dark theme */
-    --background: 220 25% 8%;
-    --foreground: 210 20% 96%;
+    /* Warm dark theme for evening companions */
+    --background: 25 25% 12%;
+    --foreground: 35 80% 95%;
 
-    --card: 220 20% 12%;
-    --card-foreground: 210 20% 96%;
+    --card: 25 20% 16%;
+    --card-foreground: 35 80% 95%;
 
-    --popover: 220 20% 12%;
-    --popover-foreground: 210 20% 96%;
+    --popover: 25 20% 16%;
+    --popover-foreground: 35 80% 95%;
 
-    --primary: 25 85% 65%;
-    --primary-foreground: 220 25% 8%;
+    --primary: 20 100% 65%;
+    --primary-foreground: 25 25% 12%;
 
-    --secondary: 220 15% 15%;
-    --secondary-foreground: 210 20% 96%;
+    --secondary: 25 15% 20%;
+    --secondary-foreground: 35 80% 95%;
 
-    --muted: 220 20% 18%;
-    --muted-foreground: 210 15% 70%;
+    --muted: 25 20% 22%;
+    --muted-foreground: 35 40% 70%;
 
-    --accent: 25 85% 65%;
-    --accent-foreground: 220 25% 8%;
+    --accent: 45 95% 70%;
+    --accent-foreground: 25 25% 12%;
 
     --destructive: 0 62.8% 50.6%;
     --destructive-foreground: 35 25% 96%;
 
-    --border: 25 20% 20%;
-    --input: 25 20% 20%;
-    --ring: 38 65% 75%;
+    --border: 25 25% 25%;
+    --input: 25 25% 25%;
+    --ring: 20 100% 65%;
 
-    /* Modern dark mode tokens */
-    --coffee-dark: 220 25% 8%;
-    --coffee-light: 220 15% 15%;
-    --coffee-copper: 25 85% 65%;
-    --coffee-slate: 215 10% 25%;
-    --coffee-mist: 220 20% 20%;
+    /* Warm dark mode tokens */
+    --coffee-warm: 25 25% 12%;
+    --coffee-light: 25 15% 20%;
+    --coffee-orange: 20 100% 65%;
+    --coffee-cream: 25 20% 22%;
+    --coffee-gold: 45 95% 70%;
+    --coffee-peach: 15 60% 60%;
+    --coffee-coral: 10 70% 60%;
+    --coffee-sunshine: 50 80% 65%;
+    --coffee-sky: 200 60% 65%;
+    --coffee-mint: 150 40% 65%;
     
-    --gradient-coffee: linear-gradient(135deg, hsl(var(--coffee-slate)), hsl(var(--coffee-dark)));
-    --gradient-light: linear-gradient(180deg, hsl(var(--coffee-light)), hsl(var(--background)));
-    --gradient-copper: linear-gradient(45deg, hsl(var(--coffee-copper)), hsl(var(--accent)));
+    --gradient-sunrise: linear-gradient(135deg, hsl(var(--coffee-orange)), hsl(var(--coffee-gold)));
+    --gradient-warm: linear-gradient(135deg, hsl(var(--coffee-warm)), hsl(var(--coffee-orange)));
+    --gradient-peachy: linear-gradient(180deg, hsl(var(--coffee-peach)), hsl(var(--coffee-cream)));
+    --gradient-sky: linear-gradient(135deg, hsl(var(--coffee-sky)), hsl(var(--coffee-mint)));
+    --gradient-companion: linear-gradient(45deg, hsl(var(--coffee-coral)), hsl(var(--coffee-sunshine)));
     
-    --shadow-coffee: 0 10px 30px -10px hsl(0 0% 0% / 0.6);
-    --shadow-warm: 0 4px 20px -4px hsl(var(--coffee-copper) / 0.4);
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --shadow-warm: 0 10px 30px -10px hsl(0 0% 0% / 0.6);
+    --shadow-cozy: 0 4px 20px -4px hsl(var(--coffee-orange) / 0.4);
+    --shadow-bright: 0 8px 25px -8px hsl(var(--coffee-gold) / 0.3);
+
+    --sidebar-background: 25 20% 16%;
+    --sidebar-foreground: 35 80% 95%;
+    --sidebar-primary: 20 100% 65%;
+    --sidebar-primary-foreground: 25 25% 12%;
+    --sidebar-accent: 25 15% 20%;
+    --sidebar-accent-foreground: 35 80% 95%;
+    --sidebar-border: 25 25% 25%;
+    --sidebar-ring: 20 100% 65%;
   }
 }
 
@@ -142,29 +153,51 @@
 }
 
 @layer components {
-  /* Coffee-themed component classes */
+  /* Bright, friendly component classes */
   .coffee-card {
-    @apply bg-card border border-border rounded-lg shadow-sm hover:shadow-md transition-all duration-300;
+    @apply bg-card border border-border rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105;
+    box-shadow: var(--shadow-cozy);
   }
   
-  .coffee-gradient {
-    background: var(--gradient-coffee);
+  .companion-card {
+    @apply bg-gradient-to-br from-coffee-light to-coffee-cream border border-coffee-orange/20 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 hover:scale-105;
+    box-shadow: var(--shadow-warm);
   }
   
-  .cream-gradient {
-    background: var(--gradient-cream);
+  .sunrise-gradient {
+    background: var(--gradient-sunrise);
   }
   
-  .golden-gradient {
-    background: var(--gradient-golden);
+  .warm-gradient {
+    background: var(--gradient-warm);
   }
   
-  .coffee-shadow {
-    box-shadow: var(--shadow-coffee);
+  .peachy-gradient {
+    background: var(--gradient-peachy);
+  }
+  
+  .sky-gradient {
+    background: var(--gradient-sky);
+  }
+  
+  .companion-gradient {
+    background: var(--gradient-companion);
   }
   
   .warm-shadow {
     box-shadow: var(--shadow-warm);
+  }
+  
+  .cozy-shadow {
+    box-shadow: var(--shadow-cozy);
+  }
+  
+  .bright-shadow {
+    box-shadow: var(--shadow-bright);
+  }
+  
+  .bounce-transition {
+    transition: var(--transition-bounce);
   }
   
   .smooth-transition {
@@ -172,6 +205,24 @@
   }
   
   .hero-text {
-    @apply text-4xl md:text-6xl font-bold bg-gradient-to-r from-primary to-coffee-copper bg-clip-text text-transparent;
+    @apply text-4xl md:text-6xl font-bold;
+    background: var(--gradient-sunrise);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .companion-text {
+    @apply text-2xl md:text-4xl font-bold;
+    background: var(--gradient-companion);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .feature-icon {
+    @apply w-16 h-16 p-4 rounded-2xl flex items-center justify-center text-primary;
+    background: var(--gradient-peachy);
+    box-shadow: var(--shadow-cozy);
   }
 }
