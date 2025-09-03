@@ -17,7 +17,12 @@ import { useAuth } from "@/hooks/useAuth";
 const Index = () => {
   const [activeFeature, setActiveFeature] = useState<string>('home');
   const { user, isLoading, signOut } = useAuth();
-  const navigate = useNavigate();
+      const navigate = useNavigate();
+      // ... keep existing code (timer and profile functions)
+      
+      const handleProfileClick = () => {
+        navigate('/profile');
+      };
 
   useEffect(() => {
     if (!isLoading && !user) {

@@ -54,17 +54,28 @@ export const useProfileData = () => {
     try {
       const { data, error } = await supabase
         .from('user_posts')
-        .select(`
-          *,
-          profiles!user_posts_user_id_fkey(display_name)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setPosts((data || []).map(post => ({
-        ...post,
-        profiles: post.profiles && typeof post.profiles === 'object' ? post.profiles : null
-      })));
+      
+      // Fetch profile data separately for now
+      const postsWithProfiles = data ? await Promise.all(
+        data.map(async (post) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('display_name')
+            .eq('id', post.user_id)
+            .maybeSingle();
+            
+          return {
+            ...post,
+            profiles: profile
+          };
+        })
+      ) : [];
+      
+      setPosts(postsWithProfiles);
     } catch (error) {
       console.error('Error fetching posts:', error);
       toast.error('Failed to load posts');
@@ -77,18 +88,29 @@ export const useProfileData = () => {
     try {
       const { data, error } = await supabase
         .from('user_posts')
-        .select(`
-          *,
-          profiles!user_posts_user_id_fkey(display_name)
-        `)
+        .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setUserPosts((data || []).map(post => ({
-        ...post,
-        profiles: post.profiles && typeof post.profiles === 'object' ? post.profiles : null
-      })));
+      
+      // Fetch profile data separately for now
+      const postsWithProfiles = data ? await Promise.all(
+        data.map(async (post) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('display_name')
+            .eq('id', post.user_id)
+            .maybeSingle();
+            
+          return {
+            ...post,
+            profiles: profile
+          };
+        })
+      ) : [];
+      
+      setUserPosts(postsWithProfiles);
     } catch (error) {
       console.error('Error fetching user posts:', error);
       toast.error('Failed to load your posts');
@@ -101,19 +123,30 @@ export const useProfileData = () => {
     try {
       const { data, error } = await supabase
         .from('friendships')
-        .select(`
-          *,
-          profiles!friendships_friend_id_fkey(display_name)
-        `)
+        .select('*')
         .eq('user_id', user.id)
         .eq('status', 'accepted');
 
       if (error) throw error;
-      setFriends((data || []).map(friendship => ({
-        ...friendship,
-        status: friendship.status as 'pending' | 'accepted' | 'rejected',
-        profiles: friendship.profiles && typeof friendship.profiles === 'object' ? friendship.profiles : null
-      })));
+      
+      // Fetch profile data separately for now
+      const friendsWithProfiles = data ? await Promise.all(
+        data.map(async (friendship) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('display_name')
+            .eq('id', friendship.friend_id)
+            .maybeSingle();
+            
+          return {
+            ...friendship,
+            status: friendship.status as 'pending' | 'accepted' | 'rejected',
+            profiles: profile
+          };
+        })
+      ) : [];
+      
+      setFriends(friendsWithProfiles);
     } catch (error) {
       console.error('Error fetching friends:', error);
     }
@@ -125,19 +158,30 @@ export const useProfileData = () => {
     try {
       const { data, error } = await supabase
         .from('friendships')
-        .select(`
-          *,
-          profiles!friendships_user_id_fkey(display_name)
-        `)
+        .select('*')
         .eq('friend_id', user.id)
         .eq('status', 'pending');
 
       if (error) throw error;
-      setFriendRequests((data || []).map(request => ({
-        ...request,
-        status: request.status as 'pending' | 'accepted' | 'rejected',
-        profiles: request.profiles && typeof request.profiles === 'object' ? request.profiles : null
-      })));
+      
+      // Fetch profile data separately for now
+      const requestsWithProfiles = data ? await Promise.all(
+        data.map(async (friendship) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('display_name')
+            .eq('id', friendship.user_id)
+            .maybeSingle();
+            
+          return {
+            ...friendship,
+            status: friendship.status as 'pending' | 'accepted' | 'rejected',
+            profiles: profile
+          };
+        })
+      ) : [];
+      
+      setFriendRequests(requestsWithProfiles);
     } catch (error) {
       console.error('Error fetching friend requests:', error);
     }
