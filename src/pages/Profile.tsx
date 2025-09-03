@@ -146,7 +146,7 @@ export const Profile = () => {
         style={profile?.background_url ? { backgroundImage: `url(${profile.background_url})` } : {}}
       >
         <div className="absolute inset-0 bg-black/20" />
-        <div className="absolute bottom-4 right-4">
+        <div className="absolute bottom-4 right-4 z-10">
           <input
             type="file"
             id="background-upload"
@@ -161,7 +161,7 @@ export const Profile = () => {
             size="sm"
             variant="secondary"
             onClick={() => document.getElementById('background-upload')?.click()}
-            className="bg-white/90 hover:bg-white"
+            className="bg-white/90 hover:bg-white text-black touch-manipulation"
           >
             <Camera className="h-4 w-4 mr-2" />
             Change Background
@@ -206,9 +206,9 @@ export const Profile = () => {
             </Button>
           </div>
 
-          <div className="flex-1 text-white md:text-foreground">
+          <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
-              <h2 className="text-2xl font-bold">
+              <h2 className="text-2xl font-bold text-white drop-shadow-lg md:text-foreground md:drop-shadow-none">
                 {profile?.display_name || 'Coffee Enthusiast'}
               </h2>
               <Dialog open={showProfileEdit} onOpenChange={setShowProfileEdit}>
@@ -246,7 +246,7 @@ export const Profile = () => {
                 </DialogContent>
               </Dialog>
             </div>
-            <div className="flex items-center gap-6 text-sm">
+            <div className="flex items-center gap-6 text-sm text-white/90 drop-shadow md:text-muted-foreground md:drop-shadow-none">
               <span>{friends.length} Friends</span>
               <span>{userPosts.length} Posts</span>
               <span>Member since {new Date(profile?.created_at || '').getFullYear()}</span>
