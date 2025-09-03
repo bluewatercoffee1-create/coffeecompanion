@@ -4,14 +4,15 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Heart, Clock, Thermometer, Users, Eye, Share2, HeartHandshake } from 'lucide-react';
+import { Heart, Clock, Thermometer, Users, Eye, Share2, HeartHandshake, Edit, Trash2 } from 'lucide-react';
 import { useCommunityGuides, CommunityBrewGuide } from '@/hooks/useCommunityGuides';
 import { useAuth } from '@/hooks/useAuth';
 
 const CommunityGuides = () => {
-  const { guides, myGuides, likedGuides, userLikes, loading, toggleLike } = useCommunityGuides();
+  const { guides, myGuides, likedGuides, userLikes, loading, toggleLike, updateGuide, deleteGuide } = useCommunityGuides();
   const { user } = useAuth();
   const [selectedGuide, setSelectedGuide] = useState<CommunityBrewGuide | null>(null);
+  const [editingGuide, setEditingGuide] = useState<CommunityBrewGuide | null>(null);
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty.toLowerCase()) {
@@ -29,7 +30,7 @@ const CommunityGuides = () => {
     });
   };
 
-  const GuideCard = ({ guide, showAuthor = true }: { guide: CommunityBrewGuide; showAuthor?: boolean }) => (
+  const GuideCard = ({ guide, showAuthor = true, showControls = false }: { guide: CommunityBrewGuide; showAuthor?: boolean; showControls?: boolean }) => (
     <Card className="glass-card coffee-shadow hover:scale-105 smooth-transition cursor-pointer group">
       <CardHeader>
         <div className="flex items-start justify-between">
@@ -88,9 +89,39 @@ const CommunityGuides = () => {
                 {guide.ratio}
               </span>
             </div>
-            <span className="text-xs text-muted-foreground">
-              {formatDate(guide.created_at)}
-            </span>
+            <div className="flex items-center gap-2">
+              {showControls && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingGuide(guide);
+                    }}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (confirm('Are you sure you want to delete this guide?')) {
+                        deleteGuide(guide.id);
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
+              <span className="text-xs text-muted-foreground">
+                {formatDate(guide.created_at)}
+              </span>
+            </div>
           </div>
 
           {guide.flavor_profile && guide.flavor_profile.length > 0 && (
@@ -304,7 +335,7 @@ const CommunityGuides = () => {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {myGuides.map(guide => (
-                      <GuideCard key={guide.id} guide={guide} showAuthor={false} />
+                      <GuideCard key={guide.id} guide={guide} showAuthor={false} showControls={true} />
                     ))}
                   </div>
                 )}
@@ -332,8 +363,197 @@ const CommunityGuides = () => {
             </>
           )}
         </Tabs>
+
+        {/* Edit Guide Dialog */}
+        {editingGuide && (
+          <Dialog open={!!editingGuide} onOpenChange={() => setEditingGuide(null)}>
+            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Edit Guide</DialogTitle>
+                <DialogDescription>Update your brew guide details</DialogDescription>
+              </DialogHeader>
+              <EditGuideForm 
+                guide={editingGuide} 
+                onSave={(updatedGuide) => {
+                  updateGuide(editingGuide.id, updatedGuide);
+                  setEditingGuide(null);
+                }}
+                onCancel={() => setEditingGuide(null)}
+              />
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
     </div>
+  );
+};
+
+const EditGuideForm = ({ guide, onSave, onCancel }: { 
+  guide: CommunityBrewGuide; 
+  onSave: (guide: Partial<CommunityBrewGuide>) => void;
+  onCancel: () => void;
+}) => {
+  const [formData, setFormData] = useState({
+    name: guide.name,
+    description: guide.description,
+    method: guide.method,
+    difficulty: guide.difficulty,
+    water_temp: guide.water_temp,
+    grind_size: guide.grind_size,
+    ratio: guide.ratio,
+    brew_time: guide.brew_time,
+    target_flavor: guide.target_flavor,
+    steps: guide.steps,
+    science: guide.science || '',
+    flavor_profile: guide.flavor_profile || [],
+    tips: guide.tips || [],
+    is_public: guide.is_public
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium mb-1">Guide Name</label>
+          <input
+            type="text"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            className="w-full p-2 border rounded-md"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Method</label>
+          <select
+            value={formData.method}
+            onChange={(e) => setFormData({ ...formData, method: e.target.value })}
+            className="w-full p-2 border rounded-md"
+            required
+          >
+            <option value="V60">V60</option>
+            <option value="Chemex">Chemex</option>
+            <option value="French Press">French Press</option>
+            <option value="AeroPress">AeroPress</option>
+            <option value="Espresso">Espresso</option>
+            <option value="Cold Brew">Cold Brew</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Description</label>
+        <textarea
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          className="w-full p-2 border rounded-md"
+          rows={2}
+          required
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium mb-1">Difficulty</label>
+          <select
+            value={formData.difficulty}
+            onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
+            className="w-full p-2 border rounded-md"
+          >
+            <option value="Beginner">Beginner</option>
+            <option value="Intermediate">Intermediate</option>
+            <option value="Advanced">Advanced</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Water Temperature (°C)</label>
+          <input
+            type="number"
+            value={formData.water_temp}
+            onChange={(e) => setFormData({ ...formData, water_temp: parseInt(e.target.value) })}
+            className="w-full p-2 border rounded-md"
+            min="80"
+            max="100"
+            required
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium mb-1">Grind Size</label>
+          <input
+            type="text"
+            value={formData.grind_size}
+            onChange={(e) => setFormData({ ...formData, grind_size: e.target.value })}
+            className="w-full p-2 border rounded-md"
+            placeholder="e.g., Medium-Fine"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Ratio</label>
+          <input
+            type="text"
+            value={formData.ratio}
+            onChange={(e) => setFormData({ ...formData, ratio: e.target.value })}
+            className="w-full p-2 border rounded-md"
+            placeholder="e.g., 1:15"
+            required
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium mb-1">Brew Time</label>
+          <input
+            type="text"
+            value={formData.brew_time}
+            onChange={(e) => setFormData({ ...formData, brew_time: e.target.value })}
+            className="w-full p-2 border rounded-md"
+            placeholder="e.g., 3-4 minutes"
+            required
+          />
+        </div>
+        <div className="flex items-center space-x-2 pt-6">
+          <input
+            type="checkbox"
+            id="is_public"
+            checked={formData.is_public}
+            onChange={(e) => setFormData({ ...formData, is_public: e.target.checked })}
+            className="rounded"
+          />
+          <label htmlFor="is_public" className="text-sm font-medium">Make Public</label>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Target Flavor</label>
+        <textarea
+          value={formData.target_flavor}
+          onChange={(e) => setFormData({ ...formData, target_flavor: e.target.value })}
+          className="w-full p-2 border rounded-md"
+          rows={2}
+          required
+        />
+      </div>
+
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit" className="coffee-gradient text-white">
+          Save Changes
+        </Button>
+      </div>
+    </form>
   );
 };
 

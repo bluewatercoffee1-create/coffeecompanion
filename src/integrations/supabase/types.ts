@@ -149,7 +149,15 @@ export type Database = {
           user_id?: string
           water_temp?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "community_brew_guides_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cupping_sessions: {
         Row: {
