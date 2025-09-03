@@ -545,6 +545,185 @@ const EditGuideForm = ({ guide, onSave, onCancel }: {
         />
       </div>
 
+      {/* Steps Section */}
+      <div>
+        <label className="block text-sm font-medium mb-2">Brewing Steps</label>
+        <div className="space-y-3">
+          {formData.steps.map((step, index) => (
+            <div key={index} className="border rounded-md p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">Step {step.step}</label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    const newSteps = formData.steps.filter((_, i) => i !== index);
+                    setFormData({ ...formData, steps: newSteps });
+                  }}
+                  className="text-destructive hover:text-destructive"
+                >
+                  Remove
+                </Button>
+              </div>
+              <input
+                type="text"
+                placeholder="Step instruction"
+                value={step.instruction}
+                onChange={(e) => {
+                  const newSteps = [...formData.steps];
+                  newSteps[index].instruction = e.target.value;
+                  setFormData({ ...formData, steps: newSteps });
+                }}
+                className="w-full p-2 text-sm border rounded-md"
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  placeholder="Duration (e.g., 30s)"
+                  value={step.duration || ''}
+                  onChange={(e) => {
+                    const newSteps = [...formData.steps];
+                    newSteps[index].duration = e.target.value;
+                    setFormData({ ...formData, steps: newSteps });
+                  }}
+                  className="w-full p-2 text-sm border rounded-md"
+                />
+                <input
+                  type="number"
+                  placeholder="Temperature (°C)"
+                  value={step.temperature || ''}
+                  onChange={(e) => {
+                    const newSteps = [...formData.steps];
+                    newSteps[index].temperature = e.target.value ? parseInt(e.target.value) : undefined;
+                    setFormData({ ...formData, steps: newSteps });
+                  }}
+                  className="w-full p-2 text-sm border rounded-md"
+                />
+              </div>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              const newSteps = [...formData.steps, {
+                step: formData.steps.length + 1,
+                instruction: '',
+                duration: '',
+                temperature: undefined
+              }];
+              setFormData({ ...formData, steps: newSteps });
+            }}
+            className="w-full"
+          >
+            Add Step
+          </Button>
+        </div>
+      </div>
+
+      {/* Tips Section */}
+      <div>
+        <label className="block text-sm font-medium mb-2">Pro Tips</label>
+        <div className="space-y-2">
+          {formData.tips.map((tip, index) => (
+            <div key={index} className="flex gap-2">
+              <input
+                type="text"
+                value={tip}
+                onChange={(e) => {
+                  const newTips = [...formData.tips];
+                  newTips[index] = e.target.value;
+                  setFormData({ ...formData, tips: newTips });
+                }}
+                className="flex-1 p-2 text-sm border rounded-md"
+                placeholder="Enter a pro tip..."
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  const newTips = formData.tips.filter((_, i) => i !== index);
+                  setFormData({ ...formData, tips: newTips });
+                }}
+                className="text-destructive hover:text-destructive"
+              >
+                Remove
+              </Button>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              const newTips = [...formData.tips, ''];
+              setFormData({ ...formData, tips: newTips });
+            }}
+            className="w-full"
+          >
+            Add Tip
+          </Button>
+        </div>
+      </div>
+
+      {/* Flavor Profile Section */}
+      <div>
+        <label className="block text-sm font-medium mb-2">Flavor Profile</label>
+        <div className="space-y-2">
+          {formData.flavor_profile.map((flavor, index) => (
+            <div key={index} className="flex gap-2">
+              <input
+                type="text"
+                value={flavor}
+                onChange={(e) => {
+                  const newFlavors = [...formData.flavor_profile];
+                  newFlavors[index] = e.target.value;
+                  setFormData({ ...formData, flavor_profile: newFlavors });
+                }}
+                className="flex-1 p-2 text-sm border rounded-md"
+                placeholder="Enter flavor note..."
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  const newFlavors = formData.flavor_profile.filter((_, i) => i !== index);
+                  setFormData({ ...formData, flavor_profile: newFlavors });
+                }}
+                className="text-destructive hover:text-destructive"
+              >
+                Remove
+              </Button>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              const newFlavors = [...formData.flavor_profile, ''];
+              setFormData({ ...formData, flavor_profile: newFlavors });
+            }}
+            className="w-full"
+          >
+            Add Flavor Note
+          </Button>
+        </div>
+      </div>
+
+      {/* Science Section */}
+      <div>
+        <label className="block text-sm font-medium mb-1">The Science (Optional)</label>
+        <textarea
+          value={formData.science}
+          onChange={(e) => setFormData({ ...formData, science: e.target.value })}
+          className="w-full p-2 border rounded-md"
+          rows={3}
+          placeholder="Explain the science behind this brewing method..."
+        />
+      </div>
+
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
