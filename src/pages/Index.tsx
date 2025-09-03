@@ -125,7 +125,7 @@ const Index = () => {
             <div className="flex items-center justify-center gap-4 mb-8">
               <div className="w-2 h-2 bg-white/80 rounded-full animate-pulse-glow"></div>
               <p className="text-2xl md:text-3xl mb-0 text-white/95 font-medium drop-shadow-lg">
-                Let's brew something amazing together! ☕✨
+                Let's brew something amazing together!
               </p>
               <div className="w-2 h-2 bg-white/80 rounded-full animate-pulse-glow"></div>
             </div>
