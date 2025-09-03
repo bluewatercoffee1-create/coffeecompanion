@@ -227,16 +227,23 @@ const Index = () => {
                 ))}
               </div>
               
-              <div className="flex items-center gap-3">
-                <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
-                  <User className="h-4 w-4" />
-                  <span>Welcome back!</span>
+                <div className="flex items-center gap-3">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => navigate('/profile')}
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    <span className="hidden sm:inline">Profile</span>
+                  </Button>
+                  <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>Welcome back!</span>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => signOut()}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    <span className="hidden sm:inline">Sign Out</span>
+                  </Button>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => signOut()}>
-                  <LogOut className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">Sign Out</span>
-                </Button>
-              </div>
             </div>
           </div>
         </div>

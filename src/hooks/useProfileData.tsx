@@ -56,12 +56,15 @@ export const useProfileData = () => {
         .from('user_posts')
         .select(`
           *,
-          profiles(display_name)
+          profiles!user_posts_user_id_fkey(display_name)
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setPosts(data || []);
+      setPosts((data || []).map(post => ({
+        ...post,
+        profiles: post.profiles && typeof post.profiles === 'object' ? post.profiles : null
+      })));
     } catch (error) {
       console.error('Error fetching posts:', error);
       toast.error('Failed to load posts');
@@ -76,13 +79,16 @@ export const useProfileData = () => {
         .from('user_posts')
         .select(`
           *,
-          profiles(display_name)
+          profiles!user_posts_user_id_fkey(display_name)
         `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setUserPosts(data || []);
+      setUserPosts((data || []).map(post => ({
+        ...post,
+        profiles: post.profiles && typeof post.profiles === 'object' ? post.profiles : null
+      })));
     } catch (error) {
       console.error('Error fetching user posts:', error);
       toast.error('Failed to load your posts');
@@ -103,7 +109,11 @@ export const useProfileData = () => {
         .eq('status', 'accepted');
 
       if (error) throw error;
-      setFriends(data || []);
+      setFriends((data || []).map(friendship => ({
+        ...friendship,
+        status: friendship.status as 'pending' | 'accepted' | 'rejected',
+        profiles: friendship.profiles && typeof friendship.profiles === 'object' ? friendship.profiles : null
+      })));
     } catch (error) {
       console.error('Error fetching friends:', error);
     }
@@ -123,7 +133,11 @@ export const useProfileData = () => {
         .eq('status', 'pending');
 
       if (error) throw error;
-      setFriendRequests(data || []);
+      setFriendRequests((data || []).map(request => ({
+        ...request,
+        status: request.status as 'pending' | 'accepted' | 'rejected',
+        profiles: request.profiles && typeof request.profiles === 'object' ? request.profiles : null
+      })));
     } catch (error) {
       console.error('Error fetching friend requests:', error);
     }
