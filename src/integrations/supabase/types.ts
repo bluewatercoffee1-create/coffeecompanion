@@ -85,6 +85,72 @@ export type Database = {
           },
         ]
       }
+      community_brew_guides: {
+        Row: {
+          brew_time: string
+          created_at: string
+          description: string
+          difficulty: string
+          flavor_profile: string[] | null
+          grind_size: string
+          id: string
+          is_public: boolean
+          likes_count: number
+          method: string
+          name: string
+          ratio: string
+          science: string | null
+          steps: Json
+          target_flavor: string
+          tips: string[] | null
+          updated_at: string
+          user_id: string
+          water_temp: number
+        }
+        Insert: {
+          brew_time: string
+          created_at?: string
+          description: string
+          difficulty?: string
+          flavor_profile?: string[] | null
+          grind_size: string
+          id?: string
+          is_public?: boolean
+          likes_count?: number
+          method: string
+          name: string
+          ratio: string
+          science?: string | null
+          steps?: Json
+          target_flavor: string
+          tips?: string[] | null
+          updated_at?: string
+          user_id: string
+          water_temp: number
+        }
+        Update: {
+          brew_time?: string
+          created_at?: string
+          description?: string
+          difficulty?: string
+          flavor_profile?: string[] | null
+          grind_size?: string
+          id?: string
+          is_public?: boolean
+          likes_count?: number
+          method?: string
+          name?: string
+          ratio?: string
+          science?: string | null
+          steps?: Json
+          target_flavor?: string
+          tips?: string[] | null
+          updated_at?: string
+          user_id?: string
+          water_temp?: number
+        }
+        Relationships: []
+      }
       cupping_sessions: {
         Row: {
           acidity: number | null

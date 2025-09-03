@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Timer, Book, Calculator, Wrench, Trophy, Coffee, ChevronRight, LogOut, User, Menu } from "lucide-react";
+import { Timer, Book, Calculator, Wrench, Trophy, Coffee, ChevronRight, LogOut, User, Menu, Users } from "lucide-react";
 import heroImage from "@/assets/coffee-hero.jpg";
 import { BrewTimer } from "@/components/BrewTimer";
 import CoffeeJournal from "@/components/CoffeeJournal";
@@ -11,6 +11,7 @@ import { RatioCalculator } from "@/components/RatioCalculator";
 import { BrewingGuides } from "@/components/BrewingGuides";
 import { EquipmentGuide } from "@/components/EquipmentGuide";
 import CuppingNotes from "@/components/CuppingNotes";
+import CommunityGuides from "@/components/CommunityGuides";
 import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
@@ -81,6 +82,13 @@ const Index = () => {
       title: 'Cupping Notes',
       description: 'Professional coffee scoring system',
       component: CuppingNotes
+    },
+    {
+      id: 'community',
+      icon: Users,
+      title: 'Community',
+      description: 'Discover and share brew guides with fellow enthusiasts',
+      component: CommunityGuides
     }
   ];
 

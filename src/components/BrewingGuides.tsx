@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,8 +7,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Coffee, Thermometer, Clock, Droplets, Target, ChevronRight, Beaker, Plus } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Coffee, Thermometer, Clock, Droplets, Target, ChevronRight, Beaker, Plus, Share2 } from "lucide-react";
 import { brewingGuides, BrewingGuide } from "@/data/brewingGuides";
+import { useCommunityGuides } from "@/hooks/useCommunityGuides";
+import { useAuth } from "@/hooks/useAuth";
 
 export const BrewingGuides = () => {
   const [selectedGuide, setSelectedGuide] = useState<BrewingGuide>(brewingGuides[0]);
@@ -16,6 +19,20 @@ export const BrewingGuides = () => {
   const [filterDifficulty, setFilterDifficulty] = useState<string>('all');
   const [customGuides, setCustomGuides] = useState<BrewingGuide[]>([]);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const { createGuide } = useCommunityGuides();
+  const { user } = useAuth();
+
+  // Listen for navigation events from community page
+  useEffect(() => {
+    const handleNavigateToBrewingGuides = (event: any) => {
+      if (event.detail?.createMode) {
+        setShowCreateDialog(true);
+      }
+    };
+
+    window.addEventListener('navigateToBrewingGuides', handleNavigateToBrewingGuides);
+    return () => window.removeEventListener('navigateToBrewingGuides', handleNavigateToBrewingGuides);
+  }, []);
   const [newGuide, setNewGuide] = useState<{
     name: string;
     method: string;
@@ -30,6 +47,7 @@ export const BrewingGuides = () => {
     steps: { step: number; action: string; technique: string; time: string; scienceNote: string; }[];
     tips: string[];
     science: { extraction: string; agitation: string; temperature: string; grind: string; };
+    shareWithCommunity: boolean;
   }>({
     name: '',
     method: '',
@@ -43,7 +61,8 @@ export const BrewingGuides = () => {
     flavorProfile: '',
     steps: [{ step: 1, action: '', technique: '', time: '0:30', scienceNote: '' }],
     tips: [''],
-    science: { extraction: '', agitation: '', temperature: '', grind: '' }
+    science: { extraction: '', agitation: '', temperature: '', grind: '' },
+    shareWithCommunity: false
   });
 
   const allGuides = [...brewingGuides, ...customGuides];
@@ -54,16 +73,44 @@ export const BrewingGuides = () => {
     return matchesMethod && matchesDifficulty;
   });
 
-  const createCustomGuide = () => {
-    const customGuide: BrewingGuide = {
-      ...newGuide,
-      id: `custom-${Date.now()}`,
-      targetFlavor: newGuide.targetFlavor.filter(f => f.trim() !== ''),
-      tips: newGuide.tips.filter(t => t.trim() !== ''),
-    };
+  const createCustomGuide = async () => {
+    if (user && newGuide.shareWithCommunity) {
+      // Create community guide
+      const guideData = {
+        name: newGuide.name,
+        method: newGuide.method,
+        difficulty: newGuide.difficulty,
+        brew_time: newGuide.brewTime,
+        target_flavor: newGuide.flavorProfile,
+        description: newGuide.description,
+        water_temp: newGuide.waterTemp,
+        grind_size: newGuide.grindSize,
+        ratio: newGuide.ratio,
+        steps: newGuide.steps.map(step => ({
+          step: step.step,
+          instruction: `${step.action}: ${step.technique}`,
+          duration: step.time
+        })),
+        science: Object.values(newGuide.science).join('. '),
+        flavor_profile: newGuide.targetFlavor,
+        tips: newGuide.tips.filter(t => t.trim() !== ''),
+        is_public: true
+      };
+      
+      await createGuide(guideData);
+    } else {
+      // Create local custom guide
+      const customGuide: BrewingGuide = {
+        ...newGuide,
+        id: `custom-${Date.now()}`,
+        targetFlavor: newGuide.targetFlavor.filter(f => f.trim() !== ''),
+        tips: newGuide.tips.filter(t => t.trim() !== ''),
+      };
+      
+      setCustomGuides([...customGuides, customGuide]);
+      setSelectedGuide(customGuide);
+    }
     
-    setCustomGuides([...customGuides, customGuide]);
-    setSelectedGuide(customGuide);
     setShowCreateDialog(false);
     
     // Reset form
@@ -80,7 +127,8 @@ export const BrewingGuides = () => {
       flavorProfile: '',
       steps: [{ step: 1, action: '', technique: '', time: '0:30', scienceNote: '' }],
       tips: [''],
-      science: { extraction: '', agitation: '', temperature: '', grind: '' }
+      science: { extraction: '', agitation: '', temperature: '', grind: '' },
+      shareWithCommunity: false
     });
   };
 
@@ -222,6 +270,26 @@ export const BrewingGuides = () => {
                   />
                 </div>
               </div>
+
+              {/* Share with Community Option */}
+              {user && (
+                <div className="flex items-center justify-between p-4 bg-secondary/10 rounded-lg">
+                  <div className="space-y-1">
+                    <Label htmlFor="share-toggle" className="text-base font-medium flex items-center gap-2">
+                      <Share2 className="h-4 w-4" />
+                      Share with Community
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Make this guide public so other coffee enthusiasts can discover it
+                    </p>
+                  </div>
+                  <Switch
+                    id="share-toggle"
+                    checked={newGuide.shareWithCommunity}
+                    onCheckedChange={(checked) => setNewGuide({ ...newGuide, shareWithCommunity: checked })}
+                  />
+                </div>
+              )}
 
               <div className="flex gap-4 justify-end">
                 <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
