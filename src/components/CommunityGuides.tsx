@@ -4,12 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Heart, Clock, Thermometer, Users, Eye, Share2 } from 'lucide-react';
+import { Heart, Clock, Thermometer, Users, Eye, Share2, HeartHandshake } from 'lucide-react';
 import { useCommunityGuides, CommunityBrewGuide } from '@/hooks/useCommunityGuides';
 import { useAuth } from '@/hooks/useAuth';
 
 const CommunityGuides = () => {
-  const { guides, myGuides, loading } = useCommunityGuides();
+  const { guides, myGuides, likedGuides, userLikes, loading, toggleLike } = useCommunityGuides();
   const { user } = useAuth();
   const [selectedGuide, setSelectedGuide] = useState<CommunityBrewGuide | null>(null);
 
@@ -63,10 +63,20 @@ const CommunityGuides = () => {
               <Thermometer className="h-4 w-4" />
               {guide.water_temp}°C
             </div>
-            <div className="flex items-center gap-1">
-              <Heart className="h-4 w-4" />
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`flex items-center gap-1 p-1 h-auto ${
+                userLikes.has(guide.id) ? 'text-destructive' : 'text-muted-foreground'
+              }`}
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleLike(guide.id);
+              }}
+            >
+              <Heart className={`h-4 w-4 ${userLikes.has(guide.id) ? 'fill-current' : ''}`} />
               {guide.likes_count}
-            </div>
+            </Button>
           </div>
           
           <div className="flex items-center justify-between">
@@ -229,16 +239,22 @@ const CommunityGuides = () => {
         </div>
 
         <Tabs defaultValue="explore" className="w-full">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8">
+          <TabsList className={`grid w-full max-w-lg mx-auto ${user ? 'grid-cols-3' : 'grid-cols-1'} mb-8`}>
             <TabsTrigger value="explore" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               Explore
             </TabsTrigger>
             {user && (
-              <TabsTrigger value="mine" className="flex items-center gap-2">
-                <Share2 className="h-4 w-4" />
-                My Guides
-              </TabsTrigger>
+              <>
+                <TabsTrigger value="mine" className="flex items-center gap-2">
+                  <Share2 className="h-4 w-4" />
+                  My Guides
+                </TabsTrigger>
+                <TabsTrigger value="favorites" className="flex items-center gap-2">
+                  <HeartHandshake className="h-4 w-4" />
+                  Favorites
+                </TabsTrigger>
+              </>
             )}
           </TabsList>
 
@@ -263,35 +279,57 @@ const CommunityGuides = () => {
           </TabsContent>
 
           {user && (
-            <TabsContent value="mine">
-              {myGuides.length === 0 ? (
-                <div className="text-center py-12">
-                  <Share2 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-muted-foreground mb-2">
-                    No Guides Created Yet
-                  </h3>
-                  <p className="text-muted-foreground mb-4">
-                    Create your first brew guide to share with the community!
-                  </p>
-                  <Button 
-                    className="coffee-gradient text-white"
-                    onClick={() => {
-                      // Navigate to brewing guides with create mode
-                      const event = new CustomEvent('navigateToBrewingGuides', { detail: { createMode: true } });
-                      window.dispatchEvent(event);
-                    }}
-                  >
-                    Create Guide
-                  </Button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {myGuides.map(guide => (
-                    <GuideCard key={guide.id} guide={guide} showAuthor={false} />
-                  ))}
-                </div>
-              )}
-            </TabsContent>
+            <>
+              <TabsContent value="mine">
+                {myGuides.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Share2 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-muted-foreground mb-2">
+                      No Guides Created Yet
+                    </h3>
+                    <p className="text-muted-foreground mb-4">
+                      Create your first brew guide to share with the community!
+                    </p>
+                    <Button 
+                      className="coffee-gradient text-white"
+                      onClick={() => {
+                        // Navigate to brewing guides with create mode
+                        const event = new CustomEvent('navigateToBrewingGuides', { detail: { createMode: true } });
+                        window.dispatchEvent(event);
+                      }}
+                    >
+                      Create Guide
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {myGuides.map(guide => (
+                      <GuideCard key={guide.id} guide={guide} showAuthor={false} />
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="favorites">
+                {likedGuides.length === 0 ? (
+                  <div className="text-center py-12">
+                    <HeartHandshake className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-muted-foreground mb-2">
+                      No Favorite Guides Yet
+                    </h3>
+                    <p className="text-muted-foreground">
+                      Like community guides to save them here for easy access!
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {likedGuides.map(guide => (
+                      <GuideCard key={guide.id} guide={guide} showAuthor={true} />
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            </>
           )}
         </Tabs>
       </div>

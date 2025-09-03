@@ -4,14 +4,12 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Coffee, Thermometer, Clock, Droplets, Target, ChevronRight, Beaker, Plus, Share2 } from "lucide-react";
+import { Coffee, Thermometer, Clock, Droplets, Target, ChevronRight, Beaker, Plus, Share2, User, Heart } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { brewingGuides, BrewingGuide } from "@/data/brewingGuides";
 import { useCommunityGuides } from "@/hooks/useCommunityGuides";
 import { useAuth } from "@/hooks/useAuth";
+import { CustomGuideCreator } from "./CustomGuideCreator";
 
 export const BrewingGuides = () => {
   const [selectedGuide, setSelectedGuide] = useState<BrewingGuide>(brewingGuides[0]);
@@ -19,7 +17,7 @@ export const BrewingGuides = () => {
   const [filterDifficulty, setFilterDifficulty] = useState<string>('all');
   const [customGuides, setCustomGuides] = useState<BrewingGuide[]>([]);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const { createGuide } = useCommunityGuides();
+  const { myGuides, likedGuides } = useCommunityGuides();
   const { user } = useAuth();
 
   // Listen for navigation events from community page
@@ -33,37 +31,6 @@ export const BrewingGuides = () => {
     window.addEventListener('navigateToBrewingGuides', handleNavigateToBrewingGuides);
     return () => window.removeEventListener('navigateToBrewingGuides', handleNavigateToBrewingGuides);
   }, []);
-  const [newGuide, setNewGuide] = useState<{
-    name: string;
-    method: string;
-    difficulty: 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert';
-    description: string;
-    ratio: string;
-    grindSize: string;
-    waterTemp: number;
-    brewTime: string;
-    targetFlavor: string[];
-    flavorProfile: string;
-    steps: { step: number; action: string; technique: string; time: string; scienceNote: string; }[];
-    tips: string[];
-    science: { extraction: string; agitation: string; temperature: string; grind: string; };
-    shareWithCommunity: boolean;
-  }>({
-    name: '',
-    method: '',
-    difficulty: 'Beginner',
-    description: '',
-    ratio: '1:16',
-    grindSize: 'Medium',
-    waterTemp: 200,
-    brewTime: '3:00',
-    targetFlavor: [],
-    flavorProfile: '',
-    steps: [{ step: 1, action: '', technique: '', time: '0:30', scienceNote: '' }],
-    tips: [''],
-    science: { extraction: '', agitation: '', temperature: '', grind: '' },
-    shareWithCommunity: false
-  });
 
   const allGuides = [...brewingGuides, ...customGuides];
   
@@ -73,63 +40,8 @@ export const BrewingGuides = () => {
     return matchesMethod && matchesDifficulty;
   });
 
-  const createCustomGuide = async () => {
-    if (user && newGuide.shareWithCommunity) {
-      // Create community guide
-      const guideData = {
-        name: newGuide.name,
-        method: newGuide.method,
-        difficulty: newGuide.difficulty,
-        brew_time: newGuide.brewTime,
-        target_flavor: newGuide.flavorProfile,
-        description: newGuide.description,
-        water_temp: newGuide.waterTemp,
-        grind_size: newGuide.grindSize,
-        ratio: newGuide.ratio,
-        steps: newGuide.steps.map(step => ({
-          step: step.step,
-          instruction: `${step.action}: ${step.technique}`,
-          duration: step.time
-        })),
-        science: Object.values(newGuide.science).join('. '),
-        flavor_profile: newGuide.targetFlavor,
-        tips: newGuide.tips.filter(t => t.trim() !== ''),
-        is_public: true
-      };
-      
-      await createGuide(guideData);
-    } else {
-      // Create local custom guide
-      const customGuide: BrewingGuide = {
-        ...newGuide,
-        id: `custom-${Date.now()}`,
-        targetFlavor: newGuide.targetFlavor.filter(f => f.trim() !== ''),
-        tips: newGuide.tips.filter(t => t.trim() !== ''),
-      };
-      
-      setCustomGuides([...customGuides, customGuide]);
-      setSelectedGuide(customGuide);
-    }
-    
+  const handleGuideCreated = () => {
     setShowCreateDialog(false);
-    
-    // Reset form
-    setNewGuide({
-      name: '',
-      method: '',
-      difficulty: 'Beginner',
-      description: '',
-      ratio: '1:16',
-      grindSize: 'Medium',
-      waterTemp: 200,
-      brewTime: '3:00',
-      targetFlavor: [],
-      flavorProfile: '',
-      steps: [{ step: 1, action: '', technique: '', time: '0:30', scienceNote: '' }],
-      tips: [''],
-      science: { extraction: '', agitation: '', temperature: '', grind: '' },
-      shareWithCommunity: false
-    });
   };
 
   const getDifficultyColor = (difficulty: string) => {
@@ -185,301 +97,501 @@ export const BrewingGuides = () => {
               Create Custom Guide
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
             <DialogHeader>
               <DialogTitle>Create Custom Brewing Guide</DialogTitle>
             </DialogHeader>
             
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="name">Guide Name</Label>
-                  <Input
-                    id="name"
-                    value={newGuide.name}
-                    onChange={(e) => setNewGuide({...newGuide, name: e.target.value})}
-                    placeholder="My Custom Guide"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="method">Brewing Method</Label>
-                  <Input
-                    id="method"
-                    value={newGuide.method}
-                    onChange={(e) => setNewGuide({...newGuide, method: e.target.value})}
-                    placeholder="V60, AeroPress, etc."
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={newGuide.description}
-                    onChange={(e) => setNewGuide({...newGuide, description: e.target.value})}
-                    placeholder="Describe your brewing guide..."
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="difficulty">Difficulty Level</Label>
-                  <Select 
-                    value={newGuide.difficulty} 
-                    onValueChange={(value) => setNewGuide({...newGuide, difficulty: value as 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert'})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Beginner">Beginner</SelectItem>
-                      <SelectItem value="Intermediate">Intermediate</SelectItem>
-                      <SelectItem value="Advanced">Advanced</SelectItem>
-                      <SelectItem value="Expert">Expert</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="ratio">Coffee Ratio</Label>
-                  <Input
-                    id="ratio"
-                    value={newGuide.ratio}
-                    onChange={(e) => setNewGuide({...newGuide, ratio: e.target.value})}
-                    placeholder="1:16"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="waterTemp">Water Temperature (°C)</Label>
-                  <Input
-                    id="waterTemp"
-                    type="number"
-                    value={newGuide.waterTemp}
-                    onChange={(e) => setNewGuide({...newGuide, waterTemp: parseInt(e.target.value)})}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="brewTime">Total Brew Time</Label>
-                  <Input
-                    id="brewTime"
-                    value={newGuide.brewTime}
-                    onChange={(e) => setNewGuide({...newGuide, brewTime: e.target.value})}
-                    placeholder="3:00"
-                  />
-                </div>
-              </div>
-
-              {/* Share with Community Option */}
-              {user && (
-                <div className="flex items-center justify-between p-4 bg-secondary/10 rounded-lg">
-                  <div className="space-y-1">
-                    <Label htmlFor="share-toggle" className="text-base font-medium flex items-center gap-2">
-                      <Share2 className="h-4 w-4" />
-                      Share with Community
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      Make this guide public so other coffee enthusiasts can discover it
-                    </p>
-                  </div>
-                  <Switch
-                    id="share-toggle"
-                    checked={newGuide.shareWithCommunity}
-                    onCheckedChange={(checked) => setNewGuide({ ...newGuide, shareWithCommunity: checked })}
-                  />
-                </div>
-              )}
-
-              <div className="flex gap-4 justify-end">
-                <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={createCustomGuide} disabled={!newGuide.name || !newGuide.method}>
-                  Create Guide
-                </Button>
-              </div>
-            </div>
+            <CustomGuideCreator 
+              onGuideCreated={handleGuideCreated}
+              onCancel={() => setShowCreateDialog(false)}
+            />
           </DialogContent>
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Guide List */}
-        <div className="space-y-4">
-          <h3 className="text-xl font-semibold text-primary">Brewing Guides</h3>
-          {filteredGuides.map((guide) => (
-            <Card 
-              key={guide.id}
-              className={`coffee-card p-4 cursor-pointer transition-all hover:scale-105 ${
-                selectedGuide.id === guide.id ? 'ring-2 ring-primary bg-primary/5' : ''
-              }`}
-              onClick={() => setSelectedGuide(guide)}
-            >
-              <div className="flex justify-between items-start mb-3">
-                <h4 className="font-semibold text-primary">{guide.name}</h4>
-                <Badge className={getDifficultyColor(guide.difficulty)}>
-                  {guide.difficulty}
-                </Badge>
-              </div>
-              
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center gap-2">
-                  <Coffee className="h-4 w-4 text-primary" />
-                  <span>{guide.method}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-primary" />
-                  <span>{guide.brewTime}</span>
-                </div>
-              </div>
-              
-              <div className="flex flex-wrap gap-1 mt-3">
-                {guide.targetFlavor.slice(0, 2).map(flavor => (
-                  <Badge key={flavor} variant="secondary" className="text-xs">
-                    {flavor}
-                  </Badge>
-                ))}
-              </div>
-            </Card>
-          ))}
-        </div>
+      <Tabs defaultValue="explore" className="w-full">
+        <TabsList className="grid w-full max-w-lg mx-auto grid-cols-4 mb-8">
+          <TabsTrigger value="explore">Explore</TabsTrigger>
+          {user && (
+            <>
+              <TabsTrigger value="mine" className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                My Guides
+              </TabsTrigger>
+              <TabsTrigger value="favorites" className="flex items-center gap-2">
+                <Heart className="h-4 w-4" />
+                Favorites
+              </TabsTrigger>
+            </>
+          )}
+          <TabsTrigger value="local">Local</TabsTrigger>
+        </TabsList>
 
-        {/* Selected Guide Details */}
-        <div className="lg:col-span-2 space-y-6">
-          <Card className="coffee-card p-6">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h2 className="text-2xl font-bold text-primary mb-2">{selectedGuide.name}</h2>
-                <p className="text-muted-foreground">{selectedGuide.description}</p>
-              </div>
-              <Badge className={getDifficultyColor(selectedGuide.difficulty)}>
-                {selectedGuide.difficulty}
-              </Badge>
-            </div>
-
-            {/* Recipe Overview */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <Thermometer className="h-5 w-5 text-primary" />
-                </div>
-                <p className="text-sm text-muted-foreground">Temperature</p>
-                <p className="font-semibold">{selectedGuide.waterTemp}°C</p>
-              </div>
-              <div className="text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <Target className="h-5 w-5 text-primary" />
-                </div>
-                <p className="text-sm text-muted-foreground">Ratio</p>
-                <p className="font-semibold">{selectedGuide.ratio}</p>
-              </div>
-              <div className="text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <Clock className="h-5 w-5 text-primary" />
-                </div>
-                <p className="text-sm text-muted-foreground">Brew Time</p>
-                <p className="font-semibold">{selectedGuide.brewTime}</p>
-              </div>
-              <div className="text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <Coffee className="h-5 w-5 text-primary" />
-                </div>
-                <p className="text-sm text-muted-foreground">Grind</p>
-                <p className="font-semibold">{selectedGuide.grindSize}</p>
-              </div>
-            </div>
-
-            {/* Target Flavors */}
-            <div className="mb-6">
-              <h4 className="font-semibold text-primary mb-3">Target Flavor Profile</h4>
-              <div className="flex flex-wrap gap-2 mb-3">
-                {selectedGuide.targetFlavor.map(flavor => (
-                  <Badge key={flavor} variant="default" className="text-sm">
-                    {flavor}
-                  </Badge>
-                ))}
-              </div>
-              <p className="text-sm text-muted-foreground italic">
-                {selectedGuide.flavorProfile}
-              </p>
-            </div>
-          </Card>
-
-          {/* Brewing Steps */}
-          <Card className="coffee-card p-6">
-            <h3 className="text-xl font-semibold text-primary mb-4 flex items-center">
-              <Droplets className="h-5 w-5 mr-2" />
-              Brewing Steps
-            </h3>
-            
+        <TabsContent value="explore">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Guide List */}
             <div className="space-y-4">
-              {selectedGuide.steps.map((step) => (
-                <div key={step.step} className="border-l-2 border-primary/20 pl-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-semibold text-primary">
-                      Step {step.step}: {step.action}
-                    </h4>
-                    <span className="text-sm text-muted-foreground">{step.time}</span>
+              <h3 className="text-xl font-semibold text-primary">Built-in Brewing Guides</h3>
+              {filteredGuides.map((guide) => (
+                <Card 
+                  key={guide.id}
+                  className={`coffee-card p-4 cursor-pointer transition-all hover:scale-105 ${
+                    selectedGuide.id === guide.id ? 'ring-2 ring-primary bg-primary/5' : ''
+                  }`}
+                  onClick={() => setSelectedGuide(guide)}
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <h4 className="font-semibold text-primary">{guide.name}</h4>
+                    <Badge className={getDifficultyColor(guide.difficulty)}>
+                      {guide.difficulty}
+                    </Badge>
                   </div>
                   
-                  <p className="text-sm mb-2">{step.technique}</p>
-                  
-                  {step.scienceNote && (
-                    <div className="bg-secondary/50 p-3 rounded-lg">
-                      <p className="text-sm text-muted-foreground flex items-start">
-                        <Beaker className="h-4 w-4 mr-2 mt-0.5 text-primary" />
-                        <strong>Science:</strong> {step.scienceNote}
-                      </p>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Coffee className="h-4 w-4 text-primary" />
+                      <span>{guide.method}</span>
                     </div>
-                  )}
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-primary" />
+                      <span>{guide.brewTime}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-1 mt-3">
+                    {guide.targetFlavor.slice(0, 2).map(flavor => (
+                      <Badge key={flavor} variant="secondary" className="text-xs">
+                        {flavor}
+                      </Badge>
+                    ))}
+                  </div>
+                </Card>
+              ))}
+            </div>
+
+            {/* Selected Guide Details */}
+            <div className="lg:col-span-2 space-y-6">
+              <Card className="coffee-card p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-primary mb-2">{selectedGuide.name}</h2>
+                    <p className="text-muted-foreground">{selectedGuide.description}</p>
+                  </div>
+                  <Badge className={getDifficultyColor(selectedGuide.difficulty)}>
+                    {selectedGuide.difficulty}
+                  </Badge>
                 </div>
-              ))}
-            </div>
-          </Card>
 
-          {/* Science Breakdown */}
-          <Card className="coffee-card p-6">
-            <h3 className="text-xl font-semibold text-primary mb-4 flex items-center">
-              <Beaker className="h-5 w-5 mr-2" />
-              Brewing Science
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <h4 className="font-semibold text-primary mb-2">Extraction</h4>
-                <p className="text-sm text-muted-foreground">{selectedGuide.science.extraction}</p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-primary mb-2">Agitation</h4>
-                <p className="text-sm text-muted-foreground">{selectedGuide.science.agitation}</p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-primary mb-2">Temperature</h4>
-                <p className="text-sm text-muted-foreground">{selectedGuide.science.temperature}</p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-primary mb-2">Grind Size</h4>
-                <p className="text-sm text-muted-foreground">{selectedGuide.science.grind}</p>
-              </div>
-            </div>
-          </Card>
+                {/* Recipe Overview */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <Thermometer className="h-5 w-5 text-primary" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">Temperature</p>
+                    <p className="font-semibold">{selectedGuide.waterTemp}°C</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <Target className="h-5 w-5 text-primary" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">Ratio</p>
+                    <p className="font-semibold">{selectedGuide.ratio}</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <Clock className="h-5 w-5 text-primary" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">Brew Time</p>
+                    <p className="font-semibold">{selectedGuide.brewTime}</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <Coffee className="h-5 w-5 text-primary" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">Grind</p>
+                    <p className="font-semibold">{selectedGuide.grindSize}</p>
+                  </div>
+                </div>
 
-          {/* Pro Tips */}
-          <Card className="coffee-card p-6">
-            <h3 className="text-xl font-semibold text-primary mb-4">Pro Tips</h3>
-            
-            <ul className="space-y-2">
-              {selectedGuide.tips.map((tip, index) => (
-                <li key={index} className="flex items-start">
-                  <ChevronRight className="h-4 w-4 text-primary mr-2 mt-0.5 flex-shrink-0" />
-                  <span className="text-sm">{tip}</span>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        </div>
-      </div>
+                {/* Target Flavors */}
+                <div className="mb-6">
+                  <h4 className="font-semibold text-primary mb-3">Target Flavor Profile</h4>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {selectedGuide.targetFlavor.map(flavor => (
+                      <Badge key={flavor} variant="default" className="text-sm">
+                        {flavor}
+                      </Badge>
+                    ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground italic">
+                    {selectedGuide.flavorProfile}
+                  </p>
+                </div>
+              </Card>
+
+              {/* Brewing Steps */}
+              <Card className="coffee-card p-6">
+                <h3 className="text-xl font-semibold text-primary mb-4 flex items-center">
+                  <Droplets className="h-5 w-5 mr-2" />
+                  Brewing Steps
+                </h3>
+                
+                <div className="space-y-4">
+                  {selectedGuide.steps.map((step) => (
+                    <div key={step.step} className="border-l-2 border-primary/20 pl-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-semibold text-primary">
+                          Step {step.step}: {step.action}
+                        </h4>
+                        <span className="text-sm text-muted-foreground">{step.time}</span>
+                      </div>
+                      
+                      <p className="text-sm mb-2">{step.technique}</p>
+                      
+                      {step.scienceNote && (
+                        <div className="bg-secondary/50 p-3 rounded-lg">
+                          <p className="text-sm text-muted-foreground flex items-start">
+                            <Beaker className="h-4 w-4 mr-2 mt-0.5 text-primary flex-shrink-0" />
+                            {step.scienceNote}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </Card>
+
+              {/* Tips */}
+              {selectedGuide.tips.length > 0 && (
+                <Card className="coffee-card p-6">
+                  <h3 className="text-xl font-semibold text-primary mb-4">Pro Tips</h3>
+                  <ul className="space-y-2">
+                    {selectedGuide.tips.map((tip, index) => (
+                      <li key={index} className="text-sm flex items-start">
+                        <ChevronRight className="h-4 w-4 text-primary mr-2 mt-0.5 flex-shrink-0" />
+                        {tip}
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+              )}
+
+              {/* Science Section */}
+              {selectedGuide.science && (
+                <Card className="coffee-card p-6">
+                  <h3 className="text-xl font-semibold text-primary mb-4 flex items-center">
+                    <Beaker className="h-5 w-5 mr-2" />
+                    The Science Behind The Brew
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-semibold text-primary mb-2">Extraction Science</h4>
+                      <p className="text-sm text-muted-foreground">{selectedGuide.science.extraction}</p>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-semibold text-primary mb-2">Agitation Effects</h4>
+                      <p className="text-sm text-muted-foreground">{selectedGuide.science.agitation}</p>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-semibold text-primary mb-2">Temperature Control</h4>
+                      <p className="text-sm text-muted-foreground">{selectedGuide.science.temperature}</p>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-semibold text-primary mb-2">Grind Impact</h4>
+                      <p className="text-sm text-muted-foreground">{selectedGuide.science.grind}</p>
+                    </div>
+                  </div>
+                </Card>
+              )}
+            </div>
+          </div>
+        </TabsContent>
+
+        {user && (
+          <>
+            <TabsContent value="mine">
+              <div className="text-center py-8">
+                <h3 className="text-xl font-semibold text-primary mb-4">My Custom Guides</h3>
+                {myGuides.length === 0 ? (
+                  <div>
+                    <User className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground mb-4">
+                      You haven't created any guides yet. Create your first custom brewing guide!
+                    </p>
+                    <Button onClick={() => setShowCreateDialog(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Guide
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {myGuides.map(guide => (
+                      <Card key={guide.id} className="coffee-card p-4">
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-start">
+                            <h4 className="font-semibold text-primary">{guide.name}</h4>
+                            <Badge variant="outline">{guide.difficulty}</Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{guide.description}</p>
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            <span>{guide.method}</span>
+                            <span>{guide.brew_time}</span>
+                            <span>{guide.ratio}</span>
+                          </div>
+                          {guide.is_public && (
+                            <Badge variant="secondary" className="text-xs">
+                              Public
+                            </Badge>
+                          )}
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="favorites">
+              <div className="text-center py-8">
+                <h3 className="text-xl font-semibold text-primary mb-4">Favorite Guides</h3>
+                {likedGuides.length === 0 ? (
+                  <div>
+                    <Heart className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">
+                      You haven't liked any community guides yet. Explore the community section to discover amazing recipes!
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {likedGuides.map(guide => (
+                      <Card key={guide.id} className="coffee-card p-4">
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-start">
+                            <h4 className="font-semibold text-primary">{guide.name}</h4>
+                            <Badge variant="outline">{guide.difficulty}</Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{guide.description}</p>
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            <span>{guide.method}</span>
+                            <span>{guide.brew_time}</span>
+                            <span>{guide.ratio}</span>
+                          </div>
+                          {guide.profiles && (
+                            <p className="text-xs text-muted-foreground">
+                              by {guide.profiles.display_name}
+                            </p>
+                          )}
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </>
+        )}
+
+        <TabsContent value="local">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Custom Guides List */}
+            <div className="space-y-4">
+              <h3 className="text-xl font-semibold text-primary">Local Custom Guides</h3>
+              {customGuides.length === 0 ? (
+                <div className="text-center py-8">
+                  <Plus className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground mb-4">No local guides yet</p>
+                  <Button onClick={() => setShowCreateDialog(true)} variant="outline">
+                    Create First Guide
+                  </Button>
+                </div>
+              ) : (
+                customGuides.map((guide) => (
+                  <Card 
+                    key={guide.id}
+                    className={`coffee-card p-4 cursor-pointer transition-all hover:scale-105 ${
+                      selectedGuide.id === guide.id ? 'ring-2 ring-primary bg-primary/5' : ''
+                    }`}
+                    onClick={() => setSelectedGuide(guide)}
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <h4 className="font-semibold text-primary">{guide.name}</h4>
+                      <Badge className={getDifficultyColor(guide.difficulty)}>
+                        {guide.difficulty}
+                      </Badge>
+                    </div>
+                    
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Coffee className="h-4 w-4 text-primary" />
+                        <span>{guide.method}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-primary" />
+                        <span>{guide.brewTime}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-1 mt-3">
+                      {guide.targetFlavor.slice(0, 2).map(flavor => (
+                        <Badge key={flavor} variant="secondary" className="text-xs">
+                          {flavor}
+                        </Badge>
+                      ))}
+                    </div>
+                  </Card>
+                ))
+              )}
+            </div>
+
+            {/* Selected Guide Details (same as explore tab) */}
+            <div className="lg:col-span-2 space-y-6">
+              <Card className="coffee-card p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-primary mb-2">{selectedGuide.name}</h2>
+                    <p className="text-muted-foreground">{selectedGuide.description}</p>
+                  </div>
+                  <Badge className={getDifficultyColor(selectedGuide.difficulty)}>
+                    {selectedGuide.difficulty}
+                  </Badge>
+                </div>
+
+                {/* Recipe Overview */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <Thermometer className="h-5 w-5 text-primary" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">Temperature</p>
+                    <p className="font-semibold">{selectedGuide.waterTemp}°C</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <Target className="h-5 w-5 text-primary" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">Ratio</p>
+                    <p className="font-semibold">{selectedGuide.ratio}</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <Clock className="h-5 w-5 text-primary" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">Brew Time</p>
+                    <p className="font-semibold">{selectedGuide.brewTime}</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <Coffee className="h-5 w-5 text-primary" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">Grind</p>
+                    <p className="font-semibold">{selectedGuide.grindSize}</p>
+                  </div>
+                </div>
+
+                {/* Target Flavors */}
+                <div className="mb-6">
+                  <h4 className="font-semibold text-primary mb-3">Target Flavor Profile</h4>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {selectedGuide.targetFlavor.map(flavor => (
+                      <Badge key={flavor} variant="default" className="text-sm">
+                        {flavor}
+                      </Badge>
+                    ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground italic">
+                    {selectedGuide.flavorProfile}
+                  </p>
+                </div>
+              </Card>
+
+              {/* Brewing Steps */}
+              <Card className="coffee-card p-6">
+                <h3 className="text-xl font-semibold text-primary mb-4 flex items-center">
+                  <Droplets className="h-5 w-5 mr-2" />
+                  Brewing Steps
+                </h3>
+                
+                <div className="space-y-4">
+                  {selectedGuide.steps.map((step) => (
+                    <div key={step.step} className="border-l-2 border-primary/20 pl-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-semibold text-primary">
+                          Step {step.step}: {step.action}
+                        </h4>
+                        <span className="text-sm text-muted-foreground">{step.time}</span>
+                      </div>
+                      
+                      <p className="text-sm mb-2">{step.technique}</p>
+                      
+                      {step.scienceNote && (
+                        <div className="bg-secondary/50 p-3 rounded-lg">
+                          <p className="text-sm text-muted-foreground flex items-start">
+                            <Beaker className="h-4 w-4 mr-2 mt-0.5 text-primary flex-shrink-0" />
+                            {step.scienceNote}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </Card>
+
+              {/* Tips */}
+              {selectedGuide.tips.length > 0 && (
+                <Card className="coffee-card p-6">
+                  <h3 className="text-xl font-semibold text-primary mb-4">Pro Tips</h3>
+                  <ul className="space-y-2">
+                    {selectedGuide.tips.map((tip, index) => (
+                      <li key={index} className="text-sm flex items-start">
+                        <ChevronRight className="h-4 w-4 text-primary mr-2 mt-0.5 flex-shrink-0" />
+                        {tip}
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+              )}
+
+              {/* Science Section */}
+              {selectedGuide.science && (
+                <Card className="coffee-card p-6">
+                  <h3 className="text-xl font-semibold text-primary mb-4 flex items-center">
+                    <Beaker className="h-5 w-5 mr-2" />
+                    The Science Behind The Brew
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-semibold text-primary mb-2">Extraction Science</h4>
+                      <p className="text-sm text-muted-foreground">{selectedGuide.science.extraction}</p>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-semibold text-primary mb-2">Agitation Effects</h4>
+                      <p className="text-sm text-muted-foreground">{selectedGuide.science.agitation}</p>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-semibold text-primary mb-2">Temperature Control</h4>
+                      <p className="text-sm text-muted-foreground">{selectedGuide.science.temperature}</p>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-semibold text-primary mb-2">Grind Impact</h4>
+                      <p className="text-sm text-muted-foreground">{selectedGuide.science.grind}</p>
+                    </div>
+                  </div>
+                </Card>
+              )}
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

@@ -36,6 +36,8 @@ export interface CommunityBrewGuide {
 export const useCommunityGuides = () => {
   const [guides, setGuides] = useState<CommunityBrewGuide[]>([]);
   const [myGuides, setMyGuides] = useState<CommunityBrewGuide[]>([]);
+  const [likedGuides, setLikedGuides] = useState<CommunityBrewGuide[]>([]);
+  const [userLikes, setUserLikes] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
@@ -45,7 +47,7 @@ export const useCommunityGuides = () => {
         .from('community_brew_guides')
         .select(`
           *,
-          profiles!inner(display_name)
+          profiles(display_name)
         `)
         .eq('is_public', true)
         .order('created_at', { ascending: false });
@@ -94,6 +96,100 @@ export const useCommunityGuides = () => {
     } catch (error) {
       console.error('Error fetching my guides:', error);
       toast.error('Failed to load your guides');
+    }
+  };
+
+  const fetchUserLikes = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('guide_likes')
+        .select('guide_id')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      
+      const likeSet = new Set(data?.map(like => like.guide_id) || []);
+      setUserLikes(likeSet);
+    } catch (error) {
+      console.error('Error fetching user likes:', error);
+    }
+  };
+
+  const fetchLikedGuides = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('guide_likes')
+        .select(`
+          community_brew_guides (
+            *,
+            profiles(display_name)
+          )
+        `)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      
+      const likedGuidesData = data?.map((like: any) => ({
+        ...like.community_brew_guides,
+        steps: (like.community_brew_guides.steps as any[]).map((step: any) => ({
+          step: step.step || 1,
+          instruction: step.instruction || '',
+          duration: step.duration,
+          temperature: step.temperature
+        })),
+        flavor_profile: like.community_brew_guides.flavor_profile || [],
+        tips: like.community_brew_guides.tips || [],
+        profiles: like.community_brew_guides.profiles
+      })) || [];
+      
+      setLikedGuides(likedGuidesData);
+    } catch (error) {
+      console.error('Error fetching liked guides:', error);
+    }
+  };
+
+  const toggleLike = async (guideId: string) => {
+    if (!user) {
+      toast.error('Please sign in to like guides');
+      return;
+    }
+
+    const isLiked = userLikes.has(guideId);
+    
+    try {
+      if (isLiked) {
+        const { error } = await supabase
+          .from('guide_likes')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('guide_id', guideId);
+
+        if (error) throw error;
+        
+        setUserLikes(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(guideId);
+          return newSet;
+        });
+      } else {
+        const { error } = await supabase
+          .from('guide_likes')
+          .insert([{ user_id: user.id, guide_id: guideId }]);
+
+        if (error) throw error;
+        
+        setUserLikes(prev => new Set([...prev, guideId]));
+      }
+      
+      // Refresh guides to update like counts
+      await Promise.all([fetchPublicGuides(), fetchLikedGuides()]);
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      toast.error('Failed to update like');
     }
   };
 
@@ -172,7 +268,12 @@ export const useCommunityGuides = () => {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      await Promise.all([fetchPublicGuides(), fetchMyGuides()]);
+      await Promise.all([
+        fetchPublicGuides(), 
+        fetchMyGuides(), 
+        fetchUserLikes(),
+        fetchLikedGuides()
+      ]);
       setLoading(false);
     };
 
@@ -182,10 +283,18 @@ export const useCommunityGuides = () => {
   return {
     guides,
     myGuides,
+    likedGuides,
+    userLikes,
     loading,
     createGuide,
     updateGuide,
     deleteGuide,
-    refetch: () => Promise.all([fetchPublicGuides(), fetchMyGuides()])
+    toggleLike,
+    refetch: () => Promise.all([
+      fetchPublicGuides(), 
+      fetchMyGuides(), 
+      fetchUserLikes(),
+      fetchLikedGuides()
+    ])
   };
 };
