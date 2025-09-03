@@ -218,6 +218,11 @@ export const Profile = () => {
               <h2 className="text-2xl font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] md:text-foreground md:drop-shadow-none">
                 {profile?.display_name || 'Coffee Enthusiast'}
               </h2>
+              {user?.email === 'creator@example.com' && (
+                <Badge variant="secondary" className="bg-gradient-to-r from-primary to-primary-variant text-primary-foreground font-semibold shadow-lg">
+                  Creator
+                </Badge>
+              )}
               <Dialog open={showProfileEdit} onOpenChange={setShowProfileEdit}>
                 <DialogTrigger asChild>
                   <Button
