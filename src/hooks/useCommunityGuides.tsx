@@ -199,7 +199,35 @@ export const useCommunityGuides = () => {
       return;
     }
 
+    // Content moderation check
+    const contentToCheck = [
+      guideData.name,
+      guideData.description,
+      guideData.target_flavor,
+      guideData.science || '',
+      ...(guideData.tips || []),
+      ...(guideData.steps?.map(step => step.instruction) || [])
+    ].join(' ');
+
     try {
+      const { data: moderationData, error: moderationError } = await supabase.functions.invoke('content-moderation', {
+        body: { 
+          text: contentToCheck,
+          context: 'brew-guide-creation'
+        }
+      });
+
+      if (moderationError) {
+        console.error('Moderation check failed:', moderationError);
+        toast.error('Unable to verify content. Please try again.');
+        return;
+      }
+
+      if (!moderationData.allowed) {
+        toast.error('Content contains inappropriate language. Please review and modify your guide.');
+        return;
+      }
+
       const { data, error } = await supabase
         .from('community_brew_guides')
         .insert([{
@@ -225,6 +253,42 @@ export const useCommunityGuides = () => {
 
   const updateGuide = async (id: string, updates: Partial<CommunityBrewGuide>) => {
     if (!user) return;
+
+    // Content moderation check for updates
+    const contentToCheck = [
+      updates.name || '',
+      updates.description || '',
+      updates.target_flavor || '',
+      updates.science || '',
+      ...(updates.tips || []),
+      ...(updates.steps?.map(step => step.instruction) || [])
+    ].join(' ');
+
+    if (contentToCheck.trim()) {
+      try {
+        const { data: moderationData, error: moderationError } = await supabase.functions.invoke('content-moderation', {
+          body: { 
+            text: contentToCheck,
+            context: 'brew-guide-update'
+          }
+        });
+
+        if (moderationError) {
+          console.error('Moderation check failed:', moderationError);
+          toast.error('Unable to verify content. Please try again.');
+          return;
+        }
+
+        if (!moderationData.allowed) {
+          toast.error('Content contains inappropriate language. Please review and modify your guide.');
+          return;
+        }
+      } catch (error) {
+        console.error('Error during content moderation:', error);
+        toast.error('Failed to verify content');
+        return;
+      }
+    }
 
     try {
       const { error } = await supabase
