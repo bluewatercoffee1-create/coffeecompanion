@@ -142,10 +142,15 @@ const Index = () => {
                 Start Brewing Together <ChevronRight className="ml-3 h-6 w-6" />
               </Button>
               <Button 
-                onClick={() => setActiveFeature('journal')}
                 size="lg" 
                 variant="outline"
                 className="bg-white/20 border-white/30 text-white font-semibold px-8 py-6 rounded-full backdrop-blur-sm hover:bg-white/30 bounce-transition text-lg"
+                onClick={() => {
+                  document.getElementById('explore-section')?.scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'start'
+                  });
+                }}
               >
                 Explore Features 🚀
               </Button>
@@ -193,7 +198,7 @@ const Index = () => {
       </section>
 
       {/* Features Grid */}
-      <section className="py-20 px-4 bg-gradient-to-br from-background via-coffee-light/50 to-coffee-cream/80">
+      <section id="explore-section" className="py-20 px-4 bg-gradient-to-br from-background via-coffee-light/50 to-coffee-cream/80">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-5xl font-bold mb-6">
