@@ -11,8 +11,10 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Heart, MessageCircle, Plus, UserPlus, Check, X, Clock, ArrowLeft, Camera, Upload, Edit } from 'lucide-react';
+import { User, Heart, MessageCircle, Plus, UserPlus, Check, X, Clock, ArrowLeft, Camera, Upload, Edit, Users } from 'lucide-react';
 import { toast } from 'sonner';
+import { BrewGuidesSection } from '@/components/BrewGuidesSection';
+import { FriendSearch } from '@/components/FriendSearch';
 
 export const Profile = () => {
   const { user } = useAuth();
@@ -267,9 +269,10 @@ export const Profile = () => {
         </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-lg mx-auto grid-cols-4 mb-8">
+        <TabsList className="grid w-full max-w-lg mx-auto grid-cols-5 mb-8">
           <TabsTrigger value="feed">Feed</TabsTrigger>
           <TabsTrigger value="myposts">My Posts</TabsTrigger>
+          <TabsTrigger value="brewguides">Brew Guides</TabsTrigger>
           <TabsTrigger value="friends">Friends</TabsTrigger>
           <TabsTrigger value="requests">Requests</TabsTrigger>
         </TabsList>
@@ -448,11 +451,38 @@ export const Profile = () => {
           </div>
         </TabsContent>
 
+        <TabsContent value="brewguides">
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-primary">My Brew Guides</h2>
+              <Button onClick={() => navigate('/guides')}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Guide
+              </Button>
+            </div>
+
+            <BrewGuidesSection userId={user.id} />
+          </div>
+        </TabsContent>
+
         <TabsContent value="friends">
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold text-primary">Friends</h2>
-              <Badge variant="secondary">{friends.length} friends</Badge>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Users className="h-4 w-4 mr-2" />
+                    Find Friends
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Find Friends</DialogTitle>
+                  </DialogHeader>
+                  <FriendSearch />
+                </DialogContent>
+              </Dialog>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

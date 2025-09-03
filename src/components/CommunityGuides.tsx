@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +12,7 @@ import { useAuth } from '@/hooks/useAuth';
 const CommunityGuides = () => {
   const { guides, myGuides, likedGuides, userLikes, loading, toggleLike, updateGuide, deleteGuide } = useCommunityGuides();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [selectedGuide, setSelectedGuide] = useState<CommunityBrewGuide | null>(null);
   const [editingGuide, setEditingGuide] = useState<CommunityBrewGuide | null>(null);
 
@@ -42,9 +44,15 @@ const CommunityGuides = () => {
               {guide.description}
             </CardDescription>
             {showAuthor && guide.profiles && (
-              <p className="text-sm text-muted-foreground">
+              <button 
+                className="text-sm text-primary hover:text-primary/80 underline cursor-pointer transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/profile/${guide.user_id}`);
+                }}
+              >
                 by {guide.profiles.display_name}
-              </p>
+              </button>
             )}
           </div>
           <Badge className={getDifficultyColor(guide.difficulty)}>
