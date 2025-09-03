@@ -146,7 +146,7 @@ export const Profile = () => {
         style={profile?.background_url ? { backgroundImage: `url(${profile.background_url})` } : {}}
       >
         <div className="absolute inset-0 bg-black/20" />
-        <div className="absolute bottom-4 right-4 z-10">
+        <div className="absolute bottom-4 right-4 z-50">
           <input
             type="file"
             id="background-upload"
@@ -160,11 +160,16 @@ export const Profile = () => {
           <Button
             size="sm"
             variant="secondary"
-            onClick={() => document.getElementById('background-upload')?.click()}
-            className="bg-white/90 hover:bg-white text-black touch-manipulation"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              document.getElementById('background-upload')?.click();
+            }}
+            className="bg-white/95 hover:bg-white text-black shadow-lg border border-white/20 min-h-[40px] min-w-[120px] font-medium"
           >
-            <Camera className="h-4 w-4 mr-2" />
-            Change Background
+            <Camera className="h-4 w-4 mr-2 flex-shrink-0" />
+            <span className="hidden sm:inline">Change Background</span>
+            <span className="sm:hidden">Change</span>
           </Button>
         </div>
       </div>
@@ -208,7 +213,7 @@ export const Profile = () => {
 
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
-              <h2 className="text-2xl font-bold text-white drop-shadow-lg md:text-foreground md:drop-shadow-none">
+              <h2 className="text-2xl font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] md:text-foreground md:drop-shadow-none">
                 {profile?.display_name || 'Coffee Enthusiast'}
               </h2>
               <Dialog open={showProfileEdit} onOpenChange={setShowProfileEdit}>
@@ -246,7 +251,7 @@ export const Profile = () => {
                 </DialogContent>
               </Dialog>
             </div>
-            <div className="flex items-center gap-6 text-sm text-white/90 drop-shadow md:text-muted-foreground md:drop-shadow-none">
+            <div className="flex items-center gap-6 text-sm text-white font-medium drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] md:text-muted-foreground md:drop-shadow-none md:font-normal">
               <span>{friends.length} Friends</span>
               <span>{userPosts.length} Posts</span>
               <span>Member since {new Date(profile?.created_at || '').getFullYear()}</span>
