@@ -15,6 +15,7 @@ export interface UserPost {
   updated_at: string;
   profiles?: {
     display_name?: string;
+    avatar_url?: string;
   } | null;
 }
 
@@ -27,6 +28,7 @@ export interface Friendship {
   updated_at: string;
   profiles?: {
     display_name?: string;
+    avatar_url?: string;
   } | null;
 }
 
@@ -38,6 +40,7 @@ export interface PostComment {
   created_at: string;
   profiles?: {
     display_name: string;
+    avatar_url?: string;
   } | null;
 }
 
@@ -65,7 +68,7 @@ export const useProfileData = () => {
           try {
             const { data: profile } = await supabase
               .from('profiles')
-              .select('display_name')
+              .select('display_name, avatar_url')
               .eq('id', post.user_id)
               .maybeSingle();
               
@@ -108,7 +111,7 @@ export const useProfileData = () => {
           try {
             const { data: profile } = await supabase
               .from('profiles')
-              .select('display_name')
+              .select('display_name, avatar_url')
               .eq('id', post.user_id)
               .maybeSingle();
               
@@ -154,7 +157,7 @@ export const useProfileData = () => {
             
             const { data: profile } = await supabase
               .from('profiles')
-              .select('display_name')
+              .select('display_name, avatar_url')
               .eq('id', friendId)
               .maybeSingle();
               
@@ -198,7 +201,7 @@ export const useProfileData = () => {
           try {
             const { data: profile } = await supabase
               .from('profiles')
-              .select('display_name')
+              .select('display_name, avatar_url')
               .eq('id', friendship.user_id)
               .maybeSingle();
               

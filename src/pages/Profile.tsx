@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfileData } from '@/hooks/useProfileData';
@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Heart, MessageCircle, Plus, Check, X, Edit, Users } from 'lucide-react';
+import { User, Heart, MessageCircle, Plus, Check, X, Edit, Users, Camera, Image } from 'lucide-react';
 import { toast } from 'sonner';
 import { BrewGuidesSection } from '@/components/BrewGuidesSection';
 import { FriendSearch } from '@/components/FriendSearch';
@@ -46,6 +46,9 @@ export const Profile = () => {
   const [activeTab, setActiveTab] = useState('feed');
   const [showProfileEdit, setShowProfileEdit] = useState(false);
   const [editingProfile, setEditingProfile] = useState({ display_name: '' });
+  
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const backgroundInputRef = useRef<HTMLInputElement>(null);
 
   const handleCreatePost = async () => {
     if (!newPost.title.trim() || !newPost.content.trim()) return;
@@ -75,6 +78,42 @@ export const Profile = () => {
     } catch (error) {
       console.error('Error updating profile:', error);
       toast.error('Failed to update profile');
+    }
+  };
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size must be less than 5MB');
+      return;
+    }
+
+    try {
+      await updateAvatar(file);
+      toast.success('Avatar updated successfully!');
+    } catch (error) {
+      console.error('Error updating avatar:', error);
+      toast.error('Failed to update avatar');
+    }
+  };
+
+  const handleBackgroundUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('File size must be less than 10MB');
+      return;
+    }
+
+    try {
+      await updateBackground(file);
+      toast.success('Background updated successfully!');
+    } catch (error) {
+      console.error('Error updating background:', error);
+      toast.error('Failed to update background');
     }
   };
 
@@ -109,44 +148,103 @@ export const Profile = () => {
       {/* Content */}
       <div className="pt-14 px-4">
         {/* Profile Header */}
-        <div className="text-center py-8">
-          <div className="relative inline-block mb-4">
-            <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center border-4 border-primary/20">
-              <User className="h-12 w-12 text-primary" />
-            </div>
+        <div className="relative">
+          {/* Background Image */}
+          <div 
+            className="h-48 bg-gradient-to-br from-primary/20 to-primary/10 relative overflow-hidden rounded-lg mb-6"
+            style={{
+              backgroundImage: profile?.background_url ? `url(${profile.background_url})` : undefined,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
+            }}
+          >
             <Button
               size="sm"
-              className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full p-0"
-              onClick={() => {
-                setEditingProfile({ display_name: profile?.display_name || '' });
-                setShowProfileEdit(true);
-              }}
+              variant="outline"
+              className="absolute top-4 right-4 bg-background/80 backdrop-blur-sm"
+              onClick={() => backgroundInputRef.current?.click()}
             >
-              <Edit className="h-4 w-4" />
+              <Image className="h-4 w-4 mr-2" />
+              Background
             </Button>
           </div>
-          
-          <h1 className="text-2xl font-bold mb-2">
-            {profile?.display_name || 'Coffee Lover'}
-          </h1>
-          
-          {user?.email === 'creator@example.com' && (
-            <Badge variant="secondary" className="mb-4 bg-gradient-to-r from-coffee-gold to-coffee-orange text-white">
-              Creator ✨
-            </Badge>
-          )}
-          
-          <div className="flex justify-center gap-8 py-4">
-            <div className="text-center">
-              <div className="text-xl font-bold text-primary">{userPosts.length}</div>
-              <div className="text-sm text-muted-foreground">Posts</div>
+
+          {/* Profile Avatar and Info */}
+          <div className="text-center -mt-12 relative">
+            <div className="relative inline-block mb-4">
+              <div className="w-24 h-24 bg-background rounded-full border-4 border-background overflow-hidden">
+                {profile?.avatar_url ? (
+                  <img 
+                    src={profile.avatar_url} 
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                    <User className="h-12 w-12 text-primary" />
+                  </div>
+                )}
+              </div>
+              <Button
+                size="sm"
+                className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full p-0"
+                onClick={() => avatarInputRef.current?.click()}
+              >
+                <Camera className="h-3 w-3" />
+              </Button>
             </div>
-            <div className="text-center">
-              <div className="text-xl font-bold text-primary">{friends.length}</div>
-              <div className="text-sm text-muted-foreground">Friends</div>
+            
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <h1 className="text-2xl font-bold">
+                {profile?.display_name || 'Coffee Lover'}
+              </h1>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="p-1"
+                onClick={() => {
+                  setEditingProfile({ display_name: profile?.display_name || '' });
+                  setShowProfileEdit(true);
+                }}
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            {user?.email === 'creator@example.com' && (
+              <Badge variant="secondary" className="mb-4 bg-gradient-to-r from-coffee-gold to-coffee-orange text-white">
+                Creator ✨
+              </Badge>
+            )}
+            
+            <div className="flex justify-center gap-8 py-4">
+              <div className="text-center">
+                <div className="text-xl font-bold text-primary">{userPosts.length}</div>
+                <div className="text-sm text-muted-foreground">Posts</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xl font-bold text-primary">{friends.length}</div>
+                <div className="text-sm text-muted-foreground">Friends</div>
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Hidden File Inputs */}
+        <input
+          ref={avatarInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleAvatarUpload}
+          className="hidden"
+        />
+        <input
+          ref={backgroundInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleBackgroundUpload}
+          className="hidden"
+        />
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -172,8 +270,16 @@ export const Profile = () => {
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                        <User className="h-5 w-5 text-primary" />
+                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center overflow-hidden">
+                        {post.profiles?.avatar_url ? (
+                          <img 
+                            src={post.profiles.avatar_url} 
+                            alt="Profile"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User className="h-5 w-5 text-primary" />
+                        )}
                       </div>
                       <div>
                         <div className="font-semibold text-sm">
@@ -256,8 +362,16 @@ export const Profile = () => {
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                              <User className="h-5 w-5 text-primary" />
+                            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center overflow-hidden">
+                              {request.profiles?.avatar_url ? (
+                                <img 
+                                  src={request.profiles.avatar_url} 
+                                  alt="Profile"
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <User className="h-5 w-5 text-primary" />
+                              )}
                             </div>
                             <div>
                               <div className="font-medium text-sm">
@@ -308,8 +422,16 @@ export const Profile = () => {
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                                <User className="h-5 w-5 text-primary" />
+                              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center overflow-hidden">
+                                {friendship.profiles?.avatar_url ? (
+                                  <img 
+                                    src={friendship.profiles.avatar_url} 
+                                    alt="Profile"
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <User className="h-5 w-5 text-primary" />
+                                )}
                               </div>
                               <div>
                                 <div className="font-medium text-sm">
